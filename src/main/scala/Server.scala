@@ -30,7 +30,7 @@ object Server {
       Ok("Server is running")
   }
 
-  def runServer: Task[Unit] = 
+  def runServer: Task[Unit] =
     EmberServerBuilder
       .default[Task]
       .withHttpApp(routes.orNotFound)

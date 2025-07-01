@@ -56,15 +56,15 @@ object DocumentZioSpec extends ZIOSpecDefault {
       val doc1: Document[String] = Leaf("a")
       val doc2: Document[String] = Leaf("b")
       val doc3: Document[String] = Leaf("c")
-      
+
       // Associativity
       val left = Document.monoid[String].combine(Document.monoid[String].combine(doc1, doc2), doc3)
       val right = Document.monoid[String].combine(doc1, Document.monoid[String].combine(doc2, doc3))
-      
+
       // Identity
       val leftIdentity = Document.monoid[String].combine(Document.monoid[String].empty, doc1)
       val rightIdentity = Document.monoid[String].combine(doc1, Document.monoid[String].empty)
-      
+
       assert(left)(equalTo(right)) &&
       assert(leftIdentity)(equalTo(doc1)) &&
       assert(rightIdentity)(equalTo(doc1))

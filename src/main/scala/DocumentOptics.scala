@@ -15,13 +15,13 @@ object DocumentOptics {
     case _ => None
   }(Leaf(_))
 
-  val horizontalPrism: Prism[Document[String], List[Document[String]]] = 
+  val horizontalPrism: Prism[Document[String], List[Document[String]]] =
     Prism[Document[String], List[Document[String]]] {
       case Horizontal(cells) => Some(cells)
       case _ => None
     }(Horizontal(_))
 
-  val verticalPrism: Prism[Document[String], List[Document[String]]] = 
+  val verticalPrism: Prism[Document[String], List[Document[String]]] =
     Prism[Document[String], List[Document[String]]] {
       case Vertical(cells) => Some(cells)
       case _ => None
@@ -65,15 +65,15 @@ object DocumentOptics {
   // Extension methods for more ergonomic usage
   implicit class DocumentOps[A](doc: Document[A]) {
     def mapLeaves(f: A => A): Document[A] = Document.map(doc)(f)
-    
+
     def filterLeaves(predicate: A => Boolean): List[A] = {
       Document.fold(doc)(a => if (predicate(a)) List(a) else Nil)(_ ++ _)(_ ++ _)
     }
-    
+
     def depth: Int = {
       Document.fold(doc)(_ => 1)(depths => if (depths.isEmpty) 1 else depths.max + 1)(depths => if (depths.isEmpty) 1 else depths.max + 1)
     }
-    
+
     def leafCount: Int = {
       Document.fold(doc)(_ => 1)(_.sum)(_.sum)
     }

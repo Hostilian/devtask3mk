@@ -16,7 +16,7 @@ class DocumentPropertySpec extends AnyFlatSpec with Matchers with ScalaCheckProp
   implicit val arbString: Arbitrary[String] = Arbitrary(Gen.alphaNumStr.suchThat(_.nonEmpty))
   implicit val arbInt: Arbitrary[Int] = Arbitrary(Gen.choose(-1000, 1000))
 
-  def genLeaf[A](implicit arbA: Arbitrary[A]): Gen[Document[A]] = 
+  def genLeaf[A](implicit arbA: Arbitrary[A]): Gen[Document[A]] =
     arbA.arbitrary.map(Leaf(_))
 
   def genDocument[A](depth: Int = 3)(implicit arbA: Arbitrary[A]): Gen[Document[A]] = {
@@ -29,7 +29,7 @@ class DocumentPropertySpec extends AnyFlatSpec with Matchers with ScalaCheckProp
     )
   }
 
-  implicit def arbDocument[A](implicit arbA: Arbitrary[A]): Arbitrary[Document[A]] = 
+  implicit def arbDocument[A](implicit arbA: Arbitrary[A]): Arbitrary[Document[A]] =
     Arbitrary(genDocument[A]())
 
   "Document Functor" should "satisfy identity law" in {

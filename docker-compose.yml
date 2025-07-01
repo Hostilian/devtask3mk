@@ -10,7 +10,7 @@ services:
     volumes:
       - ./example.json:/app/example.json:ro
     restart: unless-stopped
-    
+
   document-matrix-cli:
     build: .
     environment:

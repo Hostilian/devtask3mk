@@ -2,7 +2,7 @@
 echo.
 echo ================================================================
 echo                    DOCUMENT MATRIX DEMO
-echo                    Advanced Scala 3 Project  
+echo                    Advanced Scala 3 Project
 echo ================================================================
 echo.
 
@@ -68,7 +68,7 @@ echo.
 echo Key features demonstrated:
 echo  ✓ Algebraic Data Types (ADTs) with sealed traits
 echo  ✓ Functional programming with Cats and ZIO
-echo  ✓ Type-safe JSON serialization with Circe  
+echo  ✓ Type-safe JSON serialization with Circe
 echo  ✓ Interactive CLI with pretty printing
 echo  ✓ HTTP4s REST API with multiple endpoints
 echo  ✓ Comprehensive testing with property-based tests
