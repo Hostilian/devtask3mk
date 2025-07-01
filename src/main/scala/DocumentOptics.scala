@@ -37,7 +37,7 @@ object DocumentOptics {
       case Leaf(value) => Some(value)
       case Horizontal(cells) => cells.flatMap(findFirst).headOption
       case Vertical(cells) => cells.flatMap(findFirst).headOption
-      case Empty => None
+      case Empty() => None
     }
     findFirst(doc)
   }
@@ -67,7 +67,7 @@ object DocumentOptics {
     def mapLeaves(f: A => A): Document[A] = Document.map(doc)(f)
 
     def filterLeaves(predicate: A => Boolean): List[A] = {
-      Document.fold(doc)(a => if (predicate(a)) List(a) else Nil)(_ ++ _)(_ ++ _)
+      Document.fold(doc)(a => if (predicate(a)) List(a) else Nil)(ls => ls.flatten)(ls => ls.flatten)
     }
 
     def depth: Int = {

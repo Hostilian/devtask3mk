@@ -5,7 +5,9 @@ import org.scalatest.matchers.should.Matchers
 import cats.Id
 import cats.syntax.all.*
 import zio.test.*
+import zio.test.Assertion.equalTo
 import zio.{ZIO, Runtime}
+import zio.interop.catz.*
 
 class DocumentSpec extends AnyFlatSpec with Matchers {
   "Document" should "satisfy functor identity law" in {
@@ -44,7 +46,7 @@ object DocumentZioSpec extends ZIOSpecDefault {
     test("monad transform with ZIO") {
       val doc: Document[Int] = Vertical(List(Leaf(1), Leaf(2)))
       for {
-        result <- Document.traverse[ZIO[Any, Nothing, *], Int, String](doc)(i => ZIO.succeed(i.toString))
+        result <- Document.traverse[({type F[A] = ZIO[Any, Nothing, A]})#F, Int, String](doc)(i => ZIO.succeed(i.toString))
       } yield assert(result)(equalTo(Vertical(List(Leaf("1"), Leaf("2")))))
     },
     test("catamorphism with ZIO") {

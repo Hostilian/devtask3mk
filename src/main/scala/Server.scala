@@ -3,17 +3,19 @@ package com.example
 import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
 import org.http4s.ember.server.EmberServerBuilder
-import zio.{Task, Runtime}
+import zio.{Task, Runtime, Unsafe}
 import zio.interop.catz.*
 import io.circe.syntax.*
 import org.http4s.circe.*
 import com.comcast.ip4s.{Host, Port}
+import org.http4s.EntityDecoder
+import org.http4s.circe.CirceEntityCodec.circeEntityDecoder
 
 object Server {
   val dsl = Http4sDsl[Task]
   import dsl.*
 
-  implicit val documentEntityDecoder = jsonOf[Task, Document[String]]
+  implicit val documentEntityDecoder: EntityDecoder[Task, Document[String]] = jsonOf[Task, Document[String]]
 
   val routes: HttpRoutes[Task] = HttpRoutes.of[Task] {
     case req @ POST -> Root / "render" =>
@@ -42,6 +44,8 @@ object Server {
   def main(args: Array[String]): Unit = {
     val runtime = Runtime.default
     println("Starting server on http://localhost:8080")
-    runtime.unsafeRun(runServer)
+    Unsafe.unsafe { implicit unsafe =>
+      runtime.unsafe.run(runServer).getOrThrow()
+    }
   }
 }
