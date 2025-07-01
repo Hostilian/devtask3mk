@@ -106,7 +106,7 @@ jobs:
         run: sbt compile
 
       - name: Run tests
-        run: sbt test
+        run: sbt "test; testOnly * -- -oF"
 
       - name: Generate test report
         run: sbt "testOnly * -- -u target/test-reports"
