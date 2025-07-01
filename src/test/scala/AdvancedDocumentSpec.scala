@@ -7,10 +7,10 @@ import cats.syntax.all.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import com.example.Document
-import com.example.Document.*
+import com.example.Document.{given, *}
 
 import DocumentAlgebras.*
-import DocumentDSL.*
+import DocumentDSL.{runPure, runOption}
 import DocumentComposition.*
 
 class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
@@ -169,10 +169,11 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
   }
 
   "Free monad interpreter" should "work with different effects" in {
+    import DocumentDSL.validateDocument
     val program = validateDocument(Empty[String]())
 
-    runPure(program) shouldBe Left(EmptyDocumentError)
-    runOption(program) shouldBe None
+    runPure(program).shouldBe(Left(EmptyDocumentError))
+    runOption(program).shouldBe(None)
   }
 
   // ====== TAGLESS FINAL ======
