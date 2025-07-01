@@ -2,6 +2,8 @@ ThisBuild / scalaVersion := "3.4.3"
 ThisBuild / organization := "com.example"
 ThisBuild / version := "1.0.0"
 
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
 lazy val root = project
   .in(file("."))
   .settings(
@@ -16,8 +18,8 @@ lazy val root = project
       "org.http4s" %% "http4s-ember-server" % "0.23.27",
       "org.http4s" %% "http4s-circe" % "0.23.27",
       "org.http4s" %% "http4s-dsl" % "0.23.27",
-      "dev.optics" %% "monocle-core" % "3.2.0",
-      "dev.optics" %% "monocle-macro" % "3.2.0",
+      "dev.optics" %% "monocle-core" % "3.3.0",
+      "dev.optics" %% "monocle-macro" % "3.3.0",
       "org.fusesource.jansi" % "jansi" % "2.4.1",
       "org.scalatest" %% "scalatest" % "3.2.18" % Test,
       "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test,
@@ -26,7 +28,7 @@ lazy val root = project
       "dev.zio" %% "zio-test-sbt" % "2.1.11" % Test,
       "org.openjdk.jmh" % "jmh-core" % "1.37" % Test,
       "org.openjdk.jmh" % "jmh-generator-annprocess" % "1.37" % Test,
-      "pl.project13.scala" % "sbt-jmh" % "0.4.7" % Test
+      // ...existing code...
     ),
     scalacOptions ++= Seq(
       "-deprecation",
