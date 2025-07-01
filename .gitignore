@@ -1,0 +1,15 @@
+*.class
+*.log
+target/
+.bsp/
+.scala-build/
+metals.sbt
+.idea/
+*.iml
+.vscode/
+out/
+.metals/
+.bloop/
+project/metals.sbt
+project/project/
+project/target/
