@@ -9,7 +9,7 @@ import zio.interop.catz.*
 import scala.io.StdIn
 
 object Cli {
-  
+
   def showWelcome(): ZIO[Any, Throwable, Unit] = for {
     _ <- Console.printLine(ansi().nn.fg(Color.CYAN).nn.a("📊 Document Matrix CLI").nn.reset().toString)
     _ <- Console.printLine("Built with functional programming concepts in Scala")
@@ -19,7 +19,7 @@ object Cli {
     _ <- Console.printLine("""{"type": "horizontal", "cells": [{"type": "leaf", "value": "Hello"}, {"type": "leaf", "value": "World"}]}""")
     _ <- Console.printLine("")
   } yield ()
-  
+
   def prettyPrint[A](doc: Document[A], indent: Int = 0): String = {
     val spaces = "  " * indent
     doc match {

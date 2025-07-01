@@ -22,7 +22,7 @@ WORKDIR /app
 # Copy only the JAR file we need
 COPY --from=builder /app/target/scala-3.4.3/document-matrix_3-1.0.0.jar app.jar
 
-# Default to CLI, but allow override  
+# Default to CLI, but allow override
 ENTRYPOINT ["java", "-cp", "app.jar", "com.example.Cli"]
 
 # Expose port for server mode

@@ -20,7 +20,7 @@ object SimpleExample extends App {
 
   // Now test the main assignment function
   println("\n📚 Testing the assignment function f...")
-  
+
   val result1 = Document.f[Id, String, String](identity)(doc)
   println(s"f[Id](identity): $result1")
   println(s"Is it the same? ${result1 == doc} ✓")
@@ -40,6 +40,6 @@ object SimpleExample extends App {
     if (s.nonEmpty) Some(s.reverse.nn) else None
   }(doc)
   println(s"Reversed all non-empty strings: $validationDoc")
-  
+
   println("\n🎉 Everything works! The assignment requirements are satisfied.")
 }

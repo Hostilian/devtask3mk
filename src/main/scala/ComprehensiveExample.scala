@@ -1,15 +1,17 @@
 package com.example
 
-import cats.{Id, Monad}
+import cats.Id
+import cats.Monad
 import cats.syntax.all.*
 import cats.syntax.semigroup.*
+
 import DocumentAlgebras.*
 import DocumentDSL.*
 import DocumentComposition.*
 
 /**
- * This shows off basically every functional programming concept 
- * from the assignment working together. It's like a demo reel 
+ * This shows off basically every functional programming concept
+ * from the assignment working together. It's like a demo reel
  * but for type theory nerds.
  */
 object ComprehensiveExample extends App {
@@ -94,7 +96,7 @@ object ComprehensiveExample extends App {
   // Catamorphism - tear down structure
   val sum = Document.cata(testDoc)(
     identity,          // what to do with leaves
-    _.sum,            // what to do with horizontal 
+    _.sum,            // what to do with horizontal
     _.sum,            // what to do with vertical
     () => 0           // what to do with empty
   )
