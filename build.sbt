@@ -20,6 +20,8 @@ lazy val root = project
       "com.github.julien-truffaut" %% "monocle-macro" % "3.2.0",
       "org.fusesource.jansi" % "jansi" % "2.4.1",
       "org.scalatest" %% "scalatest" % "3.2.18" % Test,
+      "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test,
+      "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
       "dev.zio" %% "zio-test" % "2.1.11" % Test,
       "dev.zio" %% "zio-test-sbt" % "2.1.11" % Test
     ),
