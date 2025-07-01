@@ -46,10 +46,10 @@ lazy val root = project
     dockerExposedPorts := Seq(8080, 8081),
     dockerRepository := Some("ghcr.io"),
     dockerUsername := Some("hostilian"),
-    
+
     // JMH settings
     Test / javaOptions += "-Djmh.separateClasspathJAR=true",
-    
+
     // Test settings
     Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"),
     Test / parallelExecution := false
