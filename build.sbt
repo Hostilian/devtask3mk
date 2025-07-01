@@ -12,6 +12,8 @@ lazy val root = project
       "dev.zio" %% "zio" % "2.1.11",
       "dev.zio" %% "zio-interop-cats" % "23.1.0.2",
       "org.typelevel" %% "cats-effect" % "3.5.4",
+      "org.typelevel" %% "cats-core" % "2.12.0",
+      "org.typelevel" %% "cats-free" % "2.12.0",
       "io.circe" %% "circe-core" % "0.14.10",
       "io.circe" %% "circe-generic" % "0.14.10",
       "io.circe" %% "circe-parser" % "0.14.10",
@@ -27,8 +29,7 @@ lazy val root = project
       "dev.zio" %% "zio-test" % "2.1.11" % Test,
       "dev.zio" %% "zio-test-sbt" % "2.1.11" % Test,
       "org.openjdk.jmh" % "jmh-core" % "1.37" % Test,
-      "org.openjdk.jmh" % "jmh-generator-annprocess" % "1.37" % Test,
-      // ...existing code...
+      "org.openjdk.jmh" % "jmh-generator-annprocess" % "1.37" % Test
     ),
     scalacOptions ++= Seq(
       "-deprecation",

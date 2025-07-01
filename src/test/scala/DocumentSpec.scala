@@ -17,7 +17,7 @@ class DocumentSpec extends AnyFlatSpec with Matchers {
 
   "Document" should "satisfy monad identity law for Option" in {
     val doc: Document[Int] = Horizontal(List(Leaf(1), Vertical(List(Leaf(2), Leaf(3)))))
-    Document.traverse[Option, Int, Int](doc)(Some(_)) shouldBe Some(doc)
+    Document.f[Option, Int, Int](Some(_))(doc) shouldBe Some(doc)
   }
 
   "Document" should "support semigroup combine" in {
@@ -46,7 +46,7 @@ object DocumentZioSpec extends ZIOSpecDefault {
     test("monad transform with ZIO") {
       val doc: Document[Int] = Vertical(List(Leaf(1), Leaf(2)))
       for {
-        result <- Document.traverse[({type F[A] = ZIO[Any, Nothing, A]})#F, Int, String](doc)(i => ZIO.succeed(i.toString))
+        result <- Document.f[({type F[A] = ZIO[Any, Nothing, A]})#F, Int, String](i => ZIO.succeed(i.toString))(doc)
       } yield assert(result)(equalTo(Vertical(List(Leaf("1"), Leaf("2")))))
     },
     test("catamorphism with ZIO") {
