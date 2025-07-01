@@ -18,6 +18,21 @@ A Scala project implementing a type-safe, functional document data structure wit
 - SBT (Scala Build Tool)
 - Scala 3.4.3 (managed by SBT)
 
+## Quick Start
+
+For Windows users, you can use the provided batch script:
+```bash
+run.bat
+```
+
+Or use SBT directly:
+```bash
+sbt compile  # Compile the project
+sbt test     # Run tests
+sbt "runMain com.example.Cli"     # Run CLI
+sbt "runMain com.example.Server"  # Run HTTP server
+```
+
 ## Setup
 
 1. Clone this repository:

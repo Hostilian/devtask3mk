@@ -1,0 +1,35 @@
+{
+  "type": "vertical",
+  "cells": [
+    {
+      "type": "leaf",
+      "value": "Document Matrix Example"
+    },
+    {
+      "type": "horizontal",
+      "cells": [
+        {
+          "type": "leaf",
+          "value": "Left"
+        },
+        {
+          "type": "vertical",
+          "cells": [
+            {
+              "type": "leaf",
+              "value": "Top Right"
+            },
+            {
+              "type": "leaf",
+              "value": "Bottom Right"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "leaf",
+      "value": "Footer"
+    }
+  ]
+}
