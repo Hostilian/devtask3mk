@@ -11,25 +11,21 @@ import io.circe.Encoder
 import io.circe.Json
 import io.circe.syntax.*
 
-// ====== ALGEBRAIC DATA TYPES ======
-// Sum type (coproduct) - sealed trait with case classes
+// Data type for documents split horizontally or vertically
 sealed trait Document[A]
 
-// Product types
 case class Leaf[A](value: A) extends Document[A]
 case class Horizontal[A](cells: List[Document[A]]) extends Document[A]
 case class Vertical[A](cells: List[Document[A]]) extends Document[A]
-
-// Unit type representation
 case class Empty[A]() extends Document[A]
 
-// Additional ADT examples demonstrating algebraic properties
+// Some error types for validation
 sealed trait DocumentError
 case object EmptyDocumentError extends DocumentError
 case class ParseError(message: String) extends DocumentError
 case class ValidationError(field: String, reason: String) extends DocumentError
 
-// Sum type for document operations
+// Document operations
 sealed trait DocumentOp[A]
 case class Insert[A](value: A, position: Position) extends DocumentOp[A]
 case class Delete[A](position: Position) extends DocumentOp[A]
@@ -38,12 +34,7 @@ case class Update[A](position: Position, newValue: A) extends DocumentOp[A]
 case class Position(row: Int, col: Int)
 
 object Document {
-  // ====== HIGHER-KINDED TYPES & POLYMORPHISM ======
-
-  // Parametric polymorphism - works for any type A
-  // Ad-hoc polymorphism via type classes below
-
-  // ====== FUNCTORS ======
+  // Functor instance - lets you map over the values
   implicit val documentFunctor: Functor[Document] = new Functor[Document] {
     def map[A, B](fa: Document[A])(f: A => B): Document[B] = fa match {
       case Leaf(value) => Leaf(f(value))
@@ -53,11 +44,10 @@ object Document {
     }
   }
 
-  // Convenience method for functor map
   def map[A, B](doc: Document[A])(f: A => B): Document[B] =
     documentFunctor.map(doc)(f)
 
-  // ====== TRAVERSE & APPLICATIVE ======
+  // Traverse instance - this is the important one for the assignment
   implicit val documentTraverse: Traverse[Document] = new Traverse[Document] {
     def traverse[G[_]: Applicative, A, B](fa: Document[A])(f: A => G[B]): G[Document[B]] = fa match {
       case Leaf(value) => f(value).map(Leaf(_))
@@ -81,17 +71,14 @@ object Document {
     }
   }
 
-  // The required function f[M[_]: Monad, A, B]: (A => M[B]) => D[A] => M[D[B]]
-  // This is actually traverse specialized for Monad
+  // The assignment function f
   def f[M[_]: Monad, A, B](g: A => M[B])(doc: Document[A]): M[Document[B]] =
     documentTraverse.traverse(doc)(g)
 
-  // Convenience method
   def traverse[F[_]: Applicative, A, B](doc: Document[A])(g: A => F[B]): F[Document[B]] =
     documentTraverse.traverse(doc)(g)
 
-  // ====== RECURSION SCHEMES (CATAMORPHISMS) ======
-  // General catamorphism - tear down the structure
+  // Catamorphism - tears down the structure
   def cata[A, B](doc: Document[A])(
     leafAlg: A => B,
     horizontalAlg: List[B] => B,
@@ -104,11 +91,10 @@ object Document {
     case Empty() => emptyAlg()
   }
 
-  // Simpler fold for when horizontal and vertical have same algebra
   def fold[A, B](doc: Document[A])(f: A => B)(g: List[B] => B)(h: List[B] => B): B =
     cata(doc)(f, g, h, () => g(Nil))
 
-  // Anamorphism - build up structure (unfold)
+  // Anamorphism - builds up structure
   def ana[A, B](seed: B)(
     coalg: B => Either[A, (List[B], Boolean)] // Left = Leaf, Right = (children, isHorizontal)
   ): Document[A] = coalg(seed) match {
@@ -117,19 +103,16 @@ object Document {
     case Right((children, false)) => Vertical(children.map(child => ana(child)(coalg)))
   }
 
-  // ====== SEMIGROUP & MONOID ======
-  // Type class instances for algebraic structures
+  // Semigroup and Monoid - for combining documents
   implicit def semigroup[A]: cats.Semigroup[Document[A]] = new cats.Semigroup[Document[A]] {
     def combine(x: Document[A], y: Document[A]): Document[A] = (x, y) match {
-      case (Empty(), doc) => doc
-      case (doc, Empty()) => doc
+      case (Empty(), d) => d
+      case (d, Empty()) => d
       case (Horizontal(c1), Horizontal(c2)) => Horizontal(c1 ++ c2)
       case (Vertical(c1), Vertical(c2)) => Vertical(c1 ++ c2)
-      case (Horizontal(c1), doc) => Horizontal(c1 :+ doc)
-      case (doc, Horizontal(c2)) => Horizontal(doc +: c2)
-      case (Vertical(c1), doc) => Vertical(c1 :+ doc)
-      case (doc, Vertical(c2)) => Vertical(doc +: c2)
-      case _ => Horizontal(List(x, y))
+      case (Horizontal(c1), d2) => Horizontal(c1 :+ d2)
+      case (d1, Horizontal(c2)) => Horizontal(d1 +: c2)
+      case (d1, d2) => Vertical(List(d1, d2))
     }
   }
 
@@ -138,8 +121,7 @@ object Document {
     def empty: Document[A] = Empty()
   }
 
-  // ====== MONAD INSTANCE ======
-  // Document as a Monad (useful for composition)
+  // Monad instance
   implicit val documentMonad: Monad[Document] = new Monad[Document] {
     def pure[A](x: A): Document[A] = Leaf(x)
 
@@ -178,32 +160,25 @@ object Document {
       }
   }
 
-  // ====== UTILITY METHODS ======
-
-  // FlatMap convenience method
+  // Some helper methods
   def flatMap[A, B](doc: Document[A])(f: A => Document[B]): Document[B] =
     documentMonad.flatMap(doc)(f)
 
-  // Pure convenience method
   def pure[A](value: A): Document[A] =
     documentMonad.pure(value)
 
-  // Map2 for applicative operations
   def map2[A, B, C](docA: Document[A], docB: Document[B])(f: (A, B) => C): Document[C] =
     flatMap(docA)(a => map(docB)(b => f(a, b)))
 
-  // FoldLeft convenience method
   def foldLeft[A, B](doc: Document[A], initial: B)(f: (B, A) => B): B =
     documentTraverse.foldLeft(doc, initial)(f)
 
-  // FoldRight convenience method
   def foldRight[A, B](doc: Document[A], initial: B)(f: (A, B) => B): B =
     documentTraverse.foldRight(doc, cats.Eval.now(initial))((a, evalB) =>
       evalB.map(b => f(a, b))
     ).value
 
-  // ====== EFFECTS & VALIDATION ======
-  // Effect-aware document operations
+  // Validation stuff
   def validateDocument[F[_]: Applicative](doc: Document[String]): F[Document[String]] = {
     val validationRules: String => cats.data.ValidatedNel[String, String] = { value =>
       if (value.nonEmpty) cats.data.Validated.valid(value)
@@ -216,19 +191,15 @@ object Document {
     traverse[ValidationResult, String, String](doc)(validationRules) match {
       case cats.data.Validated.Valid(validDoc) => Applicative[F].pure(validDoc)
       case cats.data.Validated.Invalid(errors) =>
-        // For demonstration, we'll return the original doc
-        // In practice, you'd want to handle errors appropriately
-        Applicative[F].pure(doc)
+        Applicative[F].pure(doc) // Just return original for now
     }
   }
 
-  // Type-safe parsing
   def parseDocument[A](input: String)(parser: String => Either[DocumentError, A]): Either[DocumentError, Document[A]] = {
     parser(input).map(Leaf(_))
   }
 
-  // ====== TYPE DRIVEN DEVELOPMENT EXAMPLES ======
-  // Phantom types for compile-time guarantees
+  // Phantom types for compile-time safety
   sealed trait DocumentState
   trait Valid extends DocumentState
   trait Invalid extends DocumentState
@@ -241,8 +212,7 @@ object Document {
   def processValidDocument[A](typedDoc: TypedDocument[A, Valid]): Document[A] =
     typedDoc.doc
 
-  // ====== SERIALIZATION ======
-  // Serialization
+  // JSON serialization
   implicit def encoder[A: Encoder]: Encoder[Document[A]] = {
     case Leaf(value) => Json.obj("type" -> "leaf".asJson, "value" -> value.asJson)
     case Horizontal(cells) => Json.obj("type" -> "horizontal".asJson, "cells" -> cells.asJson)

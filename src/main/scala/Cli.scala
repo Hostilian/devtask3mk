@@ -9,15 +9,26 @@ import zio.interop.catz.*
 import scala.io.StdIn
 
 object Cli {
+  
+  def showWelcome(): ZIO[Any, Throwable, Unit] = for {
+    _ <- Console.printLine(ansi().nn.fg(Color.CYAN).nn.a("📊 Document Matrix CLI").nn.reset().toString)
+    _ <- Console.printLine("Built with functional programming concepts in Scala")
+    _ <- Console.printLine("Enter JSON documents to see them parsed and pretty-printed")
+    _ <- Console.printLine("")
+    _ <- Console.printLine("Example JSON:")
+    _ <- Console.printLine("""{"type": "horizontal", "cells": [{"type": "leaf", "value": "Hello"}, {"type": "leaf", "value": "World"}]}""")
+    _ <- Console.printLine("")
+  } yield ()
+  
   def prettyPrint[A](doc: Document[A], indent: Int = 0): String = {
     val spaces = "  " * indent
     doc match {
-      case Leaf(value) => s"${spaces}Leaf($value)"
+      case Leaf(value) => s"${spaces}📄 $value"
       case Horizontal(cells) =>
-        s"${spaces}Horizontal(\n${cells.map(prettyPrint(_, indent + 1)).mkString("\n")}\n${spaces})"
+        s"${spaces}↔️ Horizontal:\n${cells.map(prettyPrint(_, indent + 1)).mkString("\n")}"
       case Vertical(cells) =>
-        s"${spaces}Vertical(\n${cells.map(prettyPrint(_, indent + 1)).mkString("\n")}\n${spaces})"
-      case Empty() => s"${spaces}Empty"
+        s"${spaces}↕️ Vertical:\n${cells.map(prettyPrint(_, indent + 1)).mkString("\n")}"
+      case Empty() => s"${spaces}🕳️ Empty"
     }
   }
 
@@ -36,9 +47,19 @@ object Cli {
 
   def runInteractive: ZIO[Any, Throwable, Unit] = for {
     _ <- ZIO.attempt(AnsiConsole.systemInstall())
-    input <- Console.readLine("Enter JSON document (or 'exit' to quit): ")
-    _ <- if (input == "exit") ZIO.unit else processDocument(input.nn)
-    _ <- if (input != "exit") runInteractive else ZIO.unit
+    _ <- showWelcome()
+    _ <- interactiveLoop
+  } yield ()
+
+  def interactiveLoop: ZIO[Any, Throwable, Unit] = for {
+    input <- Console.readLine("📝 Enter JSON document (or 'exit' to quit): ")
+    _ <- if (input == null) {
+      ZIO.unit
+    } else if (input == "exit") {
+      Console.printLine("👋 Thanks for using Document Matrix!")
+    } else {
+      processDocument(input) *> interactiveLoop
+    }
   } yield ()
 
   def main(args: Array[String]): Unit = {

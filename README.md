@@ -1,288 +1,212 @@
-# Document Matrix - Comprehensive Functional Programming Showcase
+# Document Matrix 📊
 
-[![CI](https://github.com/Hostilian/devtask3mk/actions/workflows/ci.yml/badge.svg)](https://github.com/Hostilian/devtask3mk/actions/workflows/ci.yml)
-[![Scala Version](https://img.shields.io/badge/scala-3.4.3-red.svg)](https://scala-lang.org/)
-[![ZIO Version](https://img.shields.io/badge/zio-2.1.11-blue.svg)](https://zio.dev/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+Yo, so I had to build this crazy functional programming project for uni and honestly... it turned out way cooler than I expected. 
 
-This project demonstrates advanced functional programming concepts in Scala, focusing on the assignment requirement to implement a document data structure with comprehensive type-class support and monadic transformations.
+This thing implements a recursive document structure where you can split stuff horizontally and vertically like a spreadsheet on steroids, but with ALL the fancy FP concepts my professor loves.
 
-## 🎯 Assignment Implementation
+## What the Hell is This? 🤔
 
-### Core Requirement
-**Define a data type D that represents a document subdivided horizontally or vertically into 1 or more cells that can be further subdivided or hold values of type A.**
+Imagine you have a document that can be split into cells, and each cell can either:
+- Hold some actual data (like "Hello World")  
+- Be split again into more cells (horizontal or vertical)
 
-**Equip with function:** `f[M[_]: Monad, A, B]: (A => M[B]) => D[A] => M[D[B]]`
+It's like Russian dolls but for data structures, and it's all type-safe and mathematical and stuff.
 
-**Such that:**
-- `f[Id](identity) = identity`
-- `f[Option](Some(_)) = Some(_)`
+## The Assignment ✅
 
-✅ **Implemented in:** `Document.scala` - The function `f` is implemented as `traverse` specialized for Monad contexts.
-
-## 🏗️ Functional Programming Concepts Demonstrated
-
-### 1. Algebraic Data Types (ADTs)
-- **Sum types:** `sealed trait Document[A]` with case classes
-- **Product types:** Case classes combining multiple values
-- **Unit type:** `Empty[A]()` representing void
-- **Examples:** `DocumentError`, `DocumentOp[A]`, `Position`
+Had to build a data type `D[A]` that represents documents subdivided horizontally/vertically, plus this monster function:
 
 ```scala
-sealed trait Document[A]                               // Sum type
-case class Leaf[A](value: A) extends Document[A]      // Product type
-case class Horizontal[A](cells: List[Document[A]]) extends Document[A]
-case class Vertical[A](cells: List[Document[A]]) extends Document[A]
-case class Empty[A]() extends Document[A]             // Unit type
+f[M[_]: Monad, A, B]: (A => M[B]) => D[A] => M[D[B]]
 ```
 
-### 2. Recursion Schemes
-- **Catamorphism:** `cata` - tears down document structure
-- **Anamorphism:** `ana` - builds up document structure
-- **Paramorphism:** Available through fold operations
+Where these laws hold:
+- `f[Id](identity) = identity` ✓
+- `f[Option](Some(_)) = Some(_)` ✓
 
+**TL;DR:** I nailed it. The function is basically `traverse` but specialized for monads.
+
+## Cool Stuff I Built 🚀
+
+### The Data Type
 ```scala
-def cata[A, B](doc: Document[A])(
-  leafAlg: A => B,
-  horizontalAlg: List[B] => B,
-  verticalAlg: List[B] => B,
-  emptyAlg: () => B
-): B
+sealed trait Document[A]
+case class Leaf[A](value: A) extends Document[A]                    // Holds actual data
+case class Horizontal[A](cells: List[Document[A]]) extends Document[A]  // Split left-right  
+case class Vertical[A](cells: List[Document[A]]) extends Document[A]    // Split top-bottom
+case class Empty[A]() extends Document[A]                          // Nothing here
 ```
 
-### 3. Higher-Kinded Types
-- **Type constructors:** `Document[_]`, `F[_]` parameters
-- **Kind polymorphism:** Functions work with any `F[_]: Monad`
-- **Type-level computation:** Phantom types for compile-time safety
+### Every FP Concept Under the Sun
+- **Algebraic Data Types:** Sum types, product types, the works
+- **Recursion Schemes:** Catamorphisms for tearing down structures  
+- **Higher-Kinded Types:** Functions that work with any `F[_]`
+- **Type Classes:** Functor, Monad, Semigroup, you name it
+- **Free Monads:** Built a whole DSL for document operations
+- **Tagless Final:** Alternative approach to Free monads
+- **Effect Systems:** ZIO integration, validation with cats
+- **Algebras:** Different ways to render/process documents
 
-### 4. Polymorphism
-- **Parametric:** Functions work for any type `A`
-- **Ad-hoc:** Type classes provide different behavior per type
-- **Subtype:** Sealed trait hierarchy
+### Real Working Examples
+- **CLI Tool:** Pretty prints documents with colors and ASCII art
+- **Web Server:** HTTP API for creating/manipulating documents  
+- **JSON Support:** Serialize to/from JSON with Circe
+- **Validation:** Type-safe error handling everywhere
+- **Property Tests:** Verifies all the mathematical laws
 
-**Type Classes Implemented:**
-- `Functor[Document]`
-- `Applicative[Document]` 
-- `Monad[Document]`
-- `Traverse[Document]`
-- `Semigroup[Document[A]]`
-- `Monoid[Document[A]]`
+## Quick Start 🏃‍♂️
 
-### 5. Functors, Applicatives, Monads
-- **Functor:** `map` operations preserving structure
-- **Applicative:** `map2`, `ap` for combining contexts
-- **Monad:** `flatMap`, `pure` for sequential composition
-- **Traverse:** `traverse` for effects across structure
+**Prerequisites:** You need Java 11+ and SBT installed.
 
-### 6. Free Monads
-**File:** `DocumentFree.scala`
-- **DSL:** Domain-specific language for document operations
-- **Interpreters:** Pure (`Id`) and effectful (`Option`) interpreters
-- **Composability:** Complex programs from simple operations
-
-```scala
-val program = for {
-  leaf1 <- createLeaf("A")
-  leaf2 <- createLeaf("B") 
-  combined <- createHorizontal(List(leaf1, leaf2))
-} yield combined
-```
-
-### 7. Tagless Final
-Alternative to Free monads using higher-kinded type classes:
-
-```scala
-trait DocumentF[F[_]] {
-  def createLeaf[A](value: A): F[Document[A]]
-  def createHorizontal[A](docs: List[Document[A]]): F[Document[A]]
-  // ...
-}
-```
-
-### 8. Effects & Validation
-- **Validation:** Using `ValidatedNel` for accumulating errors
-- **Error handling:** `Either[DocumentError, A]` for explicit error types
-- **Effect polymorphism:** Works with any `Applicative[F]`
-
-### 9. Algebras
-**File:** `DocumentAlgebras.scala`
-- **Render algebra:** Different rendering strategies (ASCII, HTML)
-- **Metrics algebra:** Calculate document properties
-- **Composition:** Combine multiple algebras
-
-### 10. Semigroup & Monoid
-- **Semigroup:** Associative combination of documents
-- **Monoid:** Semigroup with identity element (`Empty`)
-- **Laws:** Associativity and identity properties verified
-
-### 11. Type Safety
-- **Phantom types:** Compile-time guarantees with `TypedDocument[A, S]`
-- **Type-driven development:** Types guide implementation
-- **Parse safety:** `Either[DocumentError, A]` for safe parsing
-
-### 12. Validation & Parsing
-- **Validation combinators:** Applicative validation
-- **Parser safety:** Error types for different failure modes
-- **Serialization:** JSON encoding/decoding with Circe
-
-## 🚀 Running the Project
-
-### Compile
 ```bash
+# Clone and run
+git clone <this-repo>
+cd devtask3mk
+
+# See if it works
 sbt compile
-```
-
-### Run Tests
-```bash
 sbt test
-```
 
-### Run Examples
-```bash
-# CLI with interactive mode
+# Check the assignment requirements
+sbt "runMain com.example.AssignmentVerification"
+
+# See everything in action  
+sbt "runMain com.example.ComprehensiveExample"
+
+# Try the CLI
 sbt "runMain com.example.Cli"
 
-# Server (runs on http://localhost:8080)
+# Start the web server
 sbt "runMain com.example.Server"
-
-# Comprehensive example
-sbt "runMain com.example.ComprehensiveExample"
 ```
 
-### Available Tasks
-```bash
-sbt "SBT Compile"     # Compile the project
-sbt "SBT Test"        # Run all tests  
-sbt "Run CLI"         # Start CLI application
-sbt "Run Server"      # Start HTTP server
-sbt "Format Code"     # Format Scala code
-```
-
-## 📁 Project Structure
+## File Structure 📁
 
 ```
 src/main/scala/
-├── Document.scala              # Core ADT with type class instances
-├── DocumentFree.scala          # Free monad DSL and interpreters  
-├── DocumentAlgebras.scala      # Various algebras and composition
-├── DocumentOptics.scala        # Lens/Prism optics for deep access
-├── ComprehensiveExample.scala  # Complete demonstration
-├── Server.scala               # HTTP4s server
-└── Cli.scala                  # Command-line interface
+├── Document.scala              # Core data type + all the type class instances
+├── AssignmentVerification.scala # Proves the assignment requirements work
+├── ComprehensiveExample.scala   # Shows off EVERYTHING
+├── SimpleExample.scala         # Basic demo of the f function
+├── DocumentFree.scala          # Free monad DSL implementation  
+├── DocumentAlgebras.scala      # Different algebras for processing
+├── DocumentOptics.scala        # Lens/optics for deep updates
+├── Cli.scala                  # Command-line interface
+└── Server.scala               # HTTP server with REST API
 
 src/test/scala/
 ├── DocumentSpec.scala          # Basic functionality tests
-├── DocumentPropertySpec.scala  # Property-based tests
-└── AdvancedDocumentSpec.scala  # Advanced concepts tests
+├── AdvancedDocumentSpec.scala  # All the fancy FP concept tests  
+└── DocumentPropertySpec.scala  # Property-based law verification
 ```
 
-## 🔧 Dependencies
+## Examples That'll Blow Your Mind 🤯
 
-- **Scala 3.4.3:** Latest Scala with improved type system
-- **Cats:** Functional programming type classes and abstractions
-- **Cats Effect:** Effect system for pure functional programming
-- **Cats Free:** Free monad implementation
-- **ZIO:** Alternative effect system with excellent interop
-- **Circe:** Functional JSON library
-- **HTTP4s:** Pure functional HTTP library  
-- **Monocle:** Optics library for immutable updates
-- **ScalaTest + ScalaCheck:** Testing and property-based testing
+### Basic Usage
+```scala
+// Create a document
+val doc = Horizontal(List(
+  Leaf("Hello"),
+  Vertical(List(Leaf("World"), Leaf("!")))
+))
 
-## 🎓 Educational Value
+// Transform all values 
+val shouting = Document.map(doc)(_.toUpperCase)
+// Result: Horizontal(List(Leaf("HELLO"), Vertical(List(Leaf("WORLD"), Leaf("!")))))
 
-This project serves as a comprehensive reference for:
+// The magical f function in action
+val wrapped = Document.f[Option, String, String](Some(_))(doc)
+// Result: Some(doc) - structure preserved!
+```
 
-1. **Functional Programming Fundamentals:** ADTs, recursion schemes, type classes
-2. **Advanced Type System Features:** Higher-kinded types, phantom types, type-level programming
-3. **Effect Systems:** Free monads, tagless final, effect polymorphism
-4. **Algebraic Abstractions:** Semigroups, monoids, functors, monads
-5. **Real-World Application:** HTTP server, CLI, JSON serialization
-6. **Testing:** Unit tests, property-based tests, law verification
+### Free Monad DSL
+```scala
+val program = for {
+  leaf1 <- createLeaf("Functional")
+  leaf2 <- createLeaf("Programming") 
+  combined <- createHorizontal(List(leaf1, leaf2))
+  validated <- validateDocument(combined)
+} yield validated
 
-## 🔍 Key Insights
+val result = runPure(program)  // Execute with pure interpreter
+```
 
-1. **The assignment's function `f`** is actually the `traverse` operation specialized for monads, demonstrating how theoretical concepts have practical applications.
+### Different Rendering Algebras
+```scala
+val doc = Horizontal(List(Leaf("Code"), Leaf("Is"), Leaf("Art")))
 
-2. **Free monads vs Tagless Final:** Both approaches are shown for building composable DSLs with different trade-offs.
+// ASCII rendering
+render(doc)(asciiRenderer)  // Output: [Code] | [Is] | [Art]
 
-3. **Type Class Coherence:** Multiple type class instances work together seamlessly thanks to Scala's implicit system.
+// HTML rendering  
+render(doc)(htmlRenderer)   // Output: <div class="horizontal">...</div>
+```
 
-4. **Effect Polymorphism:** The same code works with `Id`, `Option`, `Either`, `ZIO`, etc., showing the power of abstraction.
+## The Math Checks Out ✓
 
-5. **Algebraic Thinking:** Problems are solved by finding the right algebraic structures and their laws.
+All the category theory laws are verified:
+- **Functor Laws:** Identity and composition  
+- **Monad Laws:** Left/right identity, associativity
+- **Semigroup Laws:** Associativity 
+- **Monoid Laws:** Identity element behavior
+- **Traversal Laws:** Naturality, identity, composition
 
-## 🏆 Assignment Verification
+Run the tests to see for yourself: `sbt test`
 
-The implementation fully satisfies the assignment requirements:
-
-✅ **Data type D:** `Document[A]` represents subdivided documents  
-✅ **Function f:** Implemented with correct type signature  
-✅ **Identity law:** `f[Id](identity) = identity` ✓  
-✅ **Option law:** `f[Option](Some(_)) = Some(_)` ✓  
-✅ **All concepts:** Every listed topic is comprehensively demonstrated  
-
-Run `sbt "runMain com.example.ComprehensiveExample"` to see all concepts in action!
-
-## 📋 Prerequisites
-
-- **JDK 11+:** Modern JVM runtime
-- **SBT 1.5+:** Scala build tool
-
-## 🧪 Testing
-
-The project includes comprehensive testing:
+## Docker Support 🐳
 
 ```bash
-# Run all tests
-sbt test
+# Build the image
+docker build -t document-matrix .
 
-# Run specific test suites
-sbt "testOnly com.example.DocumentSpec"
-sbt "testOnly com.example.AdvancedDocumentSpec"
-sbt "testOnly com.example.DocumentPropertySpec"
+# Run CLI
+docker run -it document-matrix
+
+# Run with different entry point  
+docker run -it document-matrix java -cp document-matrix_3.4.3-1.0.0.jar com.example.Server
 ```
 
-### Test Coverage
-- **Unit tests:** Core functionality verification
-- **Property-based tests:** Law verification with ScalaCheck
-- **Integration tests:** End-to-end API testing
-- **Type class laws:** Functor, monad, monoid law verification
+## Dependencies 📦
 
-## 🌐 API Endpoints
+This project uses the best libraries in the Scala ecosystem:
+- **Cats:** For all the type class goodness
+- **ZIO:** Modern effect system  
+- **Circe:** JSON handling that doesn't suck
+- **Http4s:** Functional HTTP
+- **ScalaTest:** Testing framework
+- **ScalaCheck:** Property-based testing
 
-When running the server (`sbt "runMain com.example.Server"`):
+See `build.sbt` for the full list.
 
-- `POST /render` - Render document as formatted text
-- `POST /validate` - Validate document structure
-- `GET /health` - Health check endpoint
+## Why This is Actually Cool 😎
 
-Example:
-```bash
-curl -X POST http://localhost:8080/render \
-  -H "Content-Type: application/json" \
-  -d '{"type":"horizontal","cells":[{"type":"leaf","value":"A"},{"type":"leaf","value":"B"}]}'
-```
+1. **Real-world applicable:** This isn't just academic BS - you could use this for layout engines, configuration systems, or any hierarchical data
+2. **Type safety:** Impossible to mess up thanks to the type system 
+3. **Composable:** Everything builds on simple, composable abstractions
+4. **Performant:** Immutable data structures with structural sharing
+5. **Testable:** Laws and properties ensure correctness
 
-## 🔧 Development
+## Contributing 🤝
 
-### Code Formatting
-```bash
-sbt scalafmtAll
-```
+If you want to add features or fix bugs:
 
-### Continuous Integration
-The project includes GitHub Actions CI that:
-- Compiles the code
-- Runs all tests
-- Checks code formatting
-- Generates test reports
+1. Fork it
+2. Create a feature branch (`git checkout -b cool-new-feature`)
+3. Make your changes
+4. Add tests (seriously, the CI will fail without them)
+5. Format code (`sbt scalafmtAll`)  
+6. Submit a PR
 
-### Architecture Decisions
-- **Scala 3:** Latest language features and improved type system
-- **ZIO + Cats:** Best of both effect systems
-- **Pure Functional:** No mutable state, explicit effects
-- **Type-driven:** Types guide implementation and prevent bugs
+## What I Learned 📚
+
+Building this taught me that functional programming isn't just academic theory - it's a practical way to build reliable, composable software. The type system catches so many bugs before they happen, and the mathematical foundations mean everything just... works.
+
+Plus, free monads are actually pretty cool once you get past the scary names.
+
+## License 📄
+
+MIT License - use it however you want, just don't blame me if it becomes sentient.
 
 ---
 
-*This project demonstrates that functional programming is not just academic theory, but a practical approach to building robust, composable, and maintainable software systems.*
+*Built with ❤️ and way too much caffeine by a CS student who probably should have been studying for other exams.*

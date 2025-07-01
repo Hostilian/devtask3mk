@@ -8,13 +8,17 @@ import DocumentDSL.*
 import DocumentComposition.*
 
 /**
- * Comprehensive example demonstrating all functional programming concepts
- * from the assignment requirements working together.
+ * This shows off basically every functional programming concept 
+ * from the assignment working together. It's like a demo reel 
+ * but for type theory nerds.
  */
 object ComprehensiveExample extends App {
 
+  println("🚀 Comprehensive FP Showcase")
+  println("Buckle up, we're about to see every concept in action...\n")
+
   // ====== ALGEBRAIC DATA TYPES IN ACTION ======
-  println("=== Algebraic Data Types ===")
+  println("🧮 Algebraic Data Types")
 
   // Sum types (sealed trait + case classes)
   val leafDoc: Document[String] = Leaf("Hello")
@@ -33,7 +37,7 @@ object ComprehensiveExample extends App {
   println(s"Operation: $operation")
 
   // ====== HIGHER-KINDED TYPES & POLYMORPHISM ======
-  println("\n=== Higher-Kinded Types & Polymorphism ===")
+  println("\n🎭 Higher-Kinded Types & Polymorphism")
 
   // Parametric polymorphism - works for any type A
   def documentLength[A](doc: Document[A]): Int =
@@ -47,29 +51,31 @@ object ComprehensiveExample extends App {
   println(s"Document metrics: $metrics")
 
   // ====== THE ASSIGNMENT'S MAIN REQUIREMENT ======
-  println("\n=== Assignment Function f[M[_]: Monad, A, B] ===")
+  println("\n🎯 Assignment Function f[M[_]: Monad, A, B]")
+  println("This is the big one from the assignment...")
 
   // f[M[_]: Monad, A, B]: (A => M[B]) => D[A] => M[D[B]]
   val testDoc = Horizontal(List(Leaf(1), Leaf(2), Leaf(3)))
 
   // Test f[Id](identity) = identity
   val identityResult = Document.f[Id, Int, Int](identity)(testDoc)
-  println(s"f[Id](identity): ${identityResult == testDoc}")
+  println(s"✓ f[Id](identity) law holds: ${identityResult == testDoc}")
 
   // Test f[Option](Some(_)) = Some(_)
   val optionResult = Document.f[Option, Int, Int](Some(_))(testDoc)
-  println(s"f[Option](Some(_)): ${optionResult == Some(testDoc)}")
+  println(s"✓ f[Option](Some(_)) law holds: ${optionResult == Some(testDoc)}")
 
   // More interesting transformations
   val stringTransform = Document.f[Option, Int, String](i => Some(s"num_$i"))(testDoc)
-  println(s"Transform to strings: $stringTransform")
+  println(s"Cool transformation: $stringTransform")
 
   // ====== FUNCTORS, APPLICATIVES, MONADS ======
-  println("\n=== Functors, Applicatives, Monads ===")
+  println("\n🔧 Functors, Applicatives, Monads")
+  println("The classic FP trio in action...")
 
   // Functor map
   val mapped = Document.map(testDoc)(_ * 2)
-  println(s"Mapped (*2): $mapped")
+  println(s"Functor map (*2): $mapped")
 
   // Applicative operations
   val doc1 = Leaf(5)
@@ -82,16 +88,17 @@ object ComprehensiveExample extends App {
   println(s"Monadic flatMap: $monadicResult")
 
   // ====== RECURSION SCHEMES ======
-  println("\n=== Recursion Schemes ===")
+  println("\n♻️ Recursion Schemes")
+  println("Math-y ways to traverse structures...")
 
   // Catamorphism - tear down structure
   val sum = Document.cata(testDoc)(
-    identity,          // leaf algebra
-    _.sum,            // horizontal algebra
-    _.sum,            // vertical algebra
-    () => 0           // empty algebra
+    identity,          // what to do with leaves
+    _.sum,            // what to do with horizontal 
+    _.sum,            // what to do with vertical
+    () => 0           // what to do with empty
   )
-  println(s"Catamorphism sum: $sum")
+  println(s"Catamorphism (tearing down to sum): $sum")
 
   // Anamorphism - build up structure
   val unfolded = Document.ana[String, Int](3) { n =>
