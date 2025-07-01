@@ -1,10 +1,12 @@
 package com.example
 
+import cats.Id
+import cats.Monad
+import cats.data.ValidatedNel
+import cats.syntax.all.*
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import cats.{Id, Monad}
-import cats.syntax.all.*
-import cats.data.ValidatedNel
+
 import DocumentAlgebras.*
 import DocumentDSL.*
 import DocumentComposition.*
@@ -61,9 +63,9 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
   // ====== HIGHER-KINDED TYPES ======
 
   "Document" should "work with different type constructors" in {
-    def testWithF[F[_]: Monad](implicit F: Monad[F]): F[Document[String]] = {
+    def testWithF[F[_]](implicit F: Monad[F]): F[Document[String]] = {
       val doc = Leaf("test")
-      Document.f[F, String, String](F.pure)(doc)
+      Document.f(F.pure[String])(doc)
     }
 
     testWithF[Id] shouldBe Leaf("test")
@@ -85,10 +87,10 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
   }
 
   "Anamorphism" should "build up document structure" in {
-    val result = Document.ana[String, List[String]](List("a", "b", "c")) {
-      case Nil => Left("empty")
-      case head :: Nil => Left(head)
-      case list => Right((list.grouped(2).toList, true))
+    val result = Document.ana[String, Int](3) {
+      case 0 => Left("zero")
+      case 1 => Left("one")
+      case n => Right((List(n-1, n-2), true))
     }
 
     result shouldBe a[Document[?]]
@@ -213,16 +215,16 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
     val doc1 = Horizontal(List(Leaf("A")))
     val doc2 = Horizontal(List(Leaf("B")))
 
-    val combined = doc1 |+| doc2
-    combined shouldBe Horizontal(List(Leaf("A"), Leaf("B")))
+    val combined = Document.semigroup[String].combine(doc1, doc2)
+    combined.shouldBe(Horizontal(List(Leaf("A"), Leaf("B"))))
   }
 
   "Document Monoid" should "have proper identity" in {
     val doc = Leaf("test")
     val empty = Document.monoid[String].empty
 
-    (doc |+| empty) shouldBe doc
-    (empty |+| doc) shouldBe doc
+    Document.monoid[String].combine(doc, empty).shouldBe(doc)
+    Document.monoid[String].combine(empty, doc).shouldBe(doc)
   }
 
   // ====== TYPE SAFETY ======

@@ -1,8 +1,14 @@
 package com.example
 
-import cats.{Monad, Functor, Traverse, Applicative}
+import cats.Applicative
+import cats.Functor
+import cats.Monad
+import cats.Traverse
 import cats.syntax.all.*
-import io.circe.{Decoder, Encoder, Json, DecodingFailure}
+import io.circe.Decoder
+import io.circe.DecodingFailure
+import io.circe.Encoder
+import io.circe.Json
 import io.circe.syntax.*
 
 // ====== ALGEBRAIC DATA TYPES ======
@@ -107,8 +113,8 @@ object Document {
     coalg: B => Either[A, (List[B], Boolean)] // Left = Leaf, Right = (children, isHorizontal)
   ): Document[A] = coalg(seed) match {
     case Left(value) => Leaf(value)
-    case Right((children, true)) => Horizontal(children.map(ana(_)(coalg)))
-    case Right((children, false)) => Vertical(children.map(ana(_)(coalg)))
+    case Right((children, true)) => Horizontal(children.map(child => ana(child)(coalg)))
+    case Right((children, false)) => Vertical(children.map(child => ana(child)(coalg)))
   }
 
   // ====== SEMIGROUP & MONOID ======
