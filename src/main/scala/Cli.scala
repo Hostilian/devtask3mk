@@ -56,7 +56,7 @@ object Cli {
   def interactiveLoop: ZIO[Any, Throwable, Unit] = for {
     input <- Console.readLine("📝 Enter JSON document (or 'exit' to quit): ")
     _ <-
-      if (input == null) {
+      if (input eq null) {
         ZIO.unit
       } else if (input == "exit") {
         Console.printLine("👋 Thanks for using Document Matrix!")
