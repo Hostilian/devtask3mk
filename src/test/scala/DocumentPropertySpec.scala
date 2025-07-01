@@ -4,6 +4,8 @@ import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.propspec.AnyPropSpec
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import com.example.Document
+import com.example.Document.*
 
 class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks with Matchers {
 
