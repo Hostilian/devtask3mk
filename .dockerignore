@@ -1,0 +1,74 @@
+# Build artifacts
+target/
+project/target/
+project/project/target/
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation (not needed in container)
+*.md
+docs/
+
+# CI/CD files
+.github/
+Makefile
+
+# Local development
+.env
+.env.local
+docker-compose.override.yml
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+.coursier/
+.sbt/
+
+# Temporary files
+*.tmp
+*.temp
+.tmp/
+
+# Test reports
+test-reports/
+test-reports-zio/
+
+# Monitoring (not needed in app container)
+monitoring/
+
+# Node modules (if any)
+node_modules/
+
+# Python cache (if any)
+__pycache__/
+*.pyc
+*.pyo
+
+# Scala worksheets
+*.sc
+
+# REPL history
+.scala_history
+
+# Coverage reports
+coverage/
+
+# Metals
+.metals/
+.bloop/

@@ -6,6 +6,7 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 
 lazy val root = project
   .in(file("."))
+  .enablePlugins(JavaAppPackaging, DockerPlugin)
   .settings(
     name := "document-matrix",
     libraryDependencies ++= Seq(
@@ -37,5 +38,19 @@ lazy val root = project
       "-unchecked",
       "-Yexplicit-nulls",
       "-Ysafe-init"
-    )
+    ),
+    // Docker settings
+    Docker / packageName := "document-matrix",
+    Docker / version := version.value,
+    dockerBaseImage := "eclipse-temurin:21-jre-alpine",
+    dockerExposedPorts := Seq(8080, 8081),
+    dockerRepository := Some("ghcr.io"),
+    dockerUsername := Some("hostilian"),
+    
+    // JMH settings
+    Test / javaOptions += "-Djmh.separateClasspathJAR=true",
+    
+    // Test settings
+    Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"),
+    Test / parallelExecution := false
   )

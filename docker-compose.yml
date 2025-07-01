@@ -1,23 +1,101 @@
 version: '3.8'
 
 services:
-  document-matrix:
-    build: .
+  document-matrix-server:
+    build: 
+      context: .
+      target: runtime
+    image: ghcr.io/hostilian/devtask3mk:latest
+    container_name: document-matrix-server
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
       - MODE=server
+      - JAVA_OPTS=-Xmx512m -Xms256m
     volumes:
       - ./example.json:/app/example.json:ro
+      - ./logs:/app/logs
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - document-matrix-network
 
   document-matrix-cli:
-    build: .
+    build: 
+      context: .
+      target: runtime
+    image: ghcr.io/hostilian/devtask3mk:latest
+    container_name: document-matrix-cli
     environment:
       - MODE=cli
+      - JAVA_OPTS=-Xmx256m -Xms128m
     volumes:
       - ./example.json:/app/example.json:ro
+      - ./logs:/app/logs
+      - ./output:/app/output
     stdin_open: true
     tty: true
     profiles:
       - cli
+    networks:
+      - document-matrix-network
+
+  # Development services
+  sbt-dev:
+    build:
+      context: .
+      target: builder
+    container_name: document-matrix-dev
+    volumes:
+      - .:/app
+      - sbt-cache:/root/.sbt
+      - coursier-cache:/root/.coursier
+    working_dir: /app
+    command: sbt
+    stdin_open: true
+    tty: true
+    profiles:
+      - dev
+    networks:
+      - document-matrix-network
+
+  # Monitoring and observability
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    profiles:
+      - monitoring
+    networks:
+      - document-matrix-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana-data:/var/lib/grafana
+    profiles:
+      - monitoring
+    networks:
+      - document-matrix-network
+
+networks:
+  document-matrix-network:
+    driver: bridge
+
+volumes:
+  sbt-cache:
+  coursier-cache:
+  grafana-data:
