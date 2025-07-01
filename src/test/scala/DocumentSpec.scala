@@ -1,13 +1,16 @@
 package com.example
 
-import org.scalatest.flatspec.AnyFlatSpec
-import org.scalatest.matchers.should.Matchers
 import cats.Id
 import cats.syntax.all.*
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers
+import zio.Runtime
+import zio.ZIO
+import zio.interop.catz.*
 import zio.test.*
 import zio.test.Assertion.equalTo
-import zio.{ZIO, Runtime}
-import zio.interop.catz.*
+
+import Document.*
 
 class DocumentSpec extends AnyFlatSpec with Matchers {
   "Document" should "satisfy functor identity law" in {

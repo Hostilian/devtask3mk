@@ -1,11 +1,17 @@
 package com.example
 
-import org.fusesource.jansi.AnsiConsole
-import org.fusesource.jansi.Ansi.{ansi, Color}
-import zio.{ZIO, Console, UIO, Runtime, Unsafe}
-import io.circe.parser.*
 import cats.effect.IO
+import io.circe.parser.*
+import org.fusesource.jansi.Ansi.Color
+import org.fusesource.jansi.Ansi.ansi
+import org.fusesource.jansi.AnsiConsole
+import zio.Console
+import zio.Runtime
+import zio.UIO
+import zio.Unsafe
+import zio.ZIO
 import zio.interop.catz.*
+
 import scala.io.StdIn
 
 object Cli {
