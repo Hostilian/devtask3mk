@@ -10,7 +10,7 @@ import com.example.Document
 import com.example.Document.{given, *}
 
 import DocumentAlgebras.*
-import DocumentDSL.{runPure, runOption}
+import DocumentDSL.{createLeaf, createHorizontal, runPure, runOption}
 import DocumentComposition.*
 
 class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {

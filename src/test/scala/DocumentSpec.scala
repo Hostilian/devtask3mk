@@ -22,7 +22,7 @@ class DocumentSpec extends AnyFlatSpec with Matchers {
     val doc: Document[Int] = Horizontal(List(Leaf(1), Vertical(List(Leaf(2), Leaf(3)))))
     Document.f[Option, Int, Int](Some(_))(doc) shouldBe Some(doc)
   }
-
+omfg 
   "Document" should "support semigroup combine" in {
     val doc1: Document[Int] = Horizontal(List(Leaf(1)))
     val doc2: Document[Int] = Horizontal(List(Leaf(2)))
