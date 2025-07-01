@@ -16,10 +16,12 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
   // ====== TESTING THE ASSIGNMENT REQUIREMENTS ======
 
   "Document data type" should "represent subdivided documents" in {
-    val doc: Document[String] = Vertical(List(
-      Horizontal(List(Leaf("A"), Leaf("B"))),
-      Horizontal(List(Leaf("C"), Leaf("D")))
-    ))
+    val doc: Document[String] = Vertical(
+      List(
+        Horizontal(List(Leaf("A"), Leaf("B"))),
+        Horizontal(List(Leaf("C"), Leaf("D")))
+      )
+    )
 
     doc shouldBe a[Document[?]]
     doc.asInstanceOf[Vertical[String]].cells should have length 2
@@ -27,13 +29,13 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
 
   "Function f" should "satisfy f[Id](identity) = identity" in {
     val doc: Document[Int] = Horizontal(List(Leaf(1), Vertical(List(Leaf(2), Leaf(3)))))
-    val result = Document.f[Id, Int, Int](identity)(doc)
+    val result             = Document.f[Id, Int, Int](identity)(doc)
     result shouldBe doc
   }
 
   "Function f" should "satisfy f[Option](Some(_)) = Some(_)" in {
     val doc: Document[Int] = Horizontal(List(Leaf(1), Vertical(List(Leaf(2), Leaf(3)))))
-    val result = Document.f[Option, Int, Int](Some(_))(doc)
+    val result             = Document.f[Option, Int, Int](Some(_))(doc)
     result shouldBe Some(doc)
   }
 
@@ -90,7 +92,7 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
     val result = Document.ana[String, Int](3) {
       case 0 => Left("zero")
       case 1 => Left("one")
-      case n => Right((List(n-1, n-2), true))
+      case n => Right((List(n - 1, n - 2), true))
     }
 
     result shouldBe a[Document[?]]
@@ -110,7 +112,7 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
   "Document" should "demonstrate ad-hoc polymorphism with type classes" in {
     import DocumentAlgebras.stringMetrics
 
-    val doc = Horizontal(List(Leaf("hello"), Leaf("world")))
+    val doc     = Horizontal(List(Leaf("hello"), Leaf("world")))
     val metrics = calculateMetrics(doc)
 
     metrics.width shouldBe 10 // "hello" + "world"
@@ -141,8 +143,8 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
 
   "Document Monad" should "satisfy monad laws" in {
     val value = 42
-    val f = (x: Int) => Leaf(x + 1)
-    val doc = Leaf(value)
+    val f     = (x: Int) => Leaf(x + 1)
+    val doc   = Leaf(value)
 
     // Left identity: pure(a).flatMap(f) == f(a)
     Document.flatMap(Document.pure(value))(f) shouldBe f(value)
@@ -155,8 +157,8 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
 
   "Free monad DSL" should "compose operations" in {
     val program = for {
-      leaf1 <- createLeaf("A")
-      leaf2 <- createLeaf("B")
+      leaf1      <- createLeaf("A")
+      leaf2      <- createLeaf("B")
       horizontal <- createHorizontal(List(leaf1, leaf2))
     } yield horizontal
 
@@ -186,7 +188,7 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
   // ====== EFFECTS & VALIDATION ======
 
   "Document validation" should "work with applicative validation" in {
-    val doc = Horizontal(List(Leaf("valid"), Leaf("")))
+    val doc    = Horizontal(List(Leaf("valid"), Leaf("")))
     val result = Document.validateDocument[Id](doc)
 
     result shouldBe a[Document[?]]
@@ -198,7 +200,7 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
     val doc = Horizontal(List(Leaf("A"), Leaf("B")))
 
     val asciiResult = render(doc)(asciiRenderer)
-    val htmlResult = render(doc)(htmlRenderer)
+    val htmlResult  = render(doc)(htmlRenderer)
 
     asciiResult should include("[A]")
     asciiResult should include("[B]")
@@ -220,7 +222,7 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
   }
 
   "Document Monoid" should "have proper identity" in {
-    val doc = Leaf("test")
+    val doc   = Leaf("test")
     val empty = Document.monoid[String].empty
 
     Document.monoid[String].combine(doc, empty).shouldBe(doc)
@@ -230,8 +232,8 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
   // ====== TYPE SAFETY ======
 
   "Phantom types" should "enforce compile-time constraints" in {
-    val doc = Horizontal(List(Leaf("A"), Leaf("B")))
-    val validDoc = Document.validateAtCompileTime(doc)
+    val doc       = Horizontal(List(Leaf("A"), Leaf("B")))
+    val validDoc  = Document.validateAtCompileTime(doc)
     val processed = Document.processValidDocument(validDoc)
 
     processed shouldBe doc

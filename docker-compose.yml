@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   document-matrix-server:
-    build: 
+    build:
       context: .
       target: runtime
     image: ghcr.io/hostilian/devtask3mk:latest
@@ -26,7 +26,7 @@ services:
       - document-matrix-network
 
   document-matrix-cli:
-    build: 
+    build:
       context: .
       target: runtime
     image: ghcr.io/hostilian/devtask3mk:latest

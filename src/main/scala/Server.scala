@@ -23,12 +23,12 @@ object Server {
   val routes: HttpRoutes[Task] = HttpRoutes.of[Task] {
     case req @ POST -> Root / "render" =>
       for {
-        doc <- req.as[Document[String]]
+        doc  <- req.as[Document[String]]
         resp <- Ok(Cli.prettyPrint(doc))
       } yield resp
     case req @ POST -> Root / "validate" =>
       for {
-        doc <- req.as[Document[String]]
+        doc  <- req.as[Document[String]]
         resp <- Ok("Valid document")
       } yield resp
     case GET -> Root / "health" =>

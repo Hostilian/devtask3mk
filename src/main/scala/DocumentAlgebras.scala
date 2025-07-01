@@ -57,10 +57,10 @@ object DocumentAlgebras {
 
   // ASCII renderer
   implicit val asciiRenderer: RenderAlgebra[String] = new RenderAlgebra[String] {
-    def renderLeaf(value: String): String = s"[$value]"
+    def renderLeaf(value: String): String                = s"[$value]"
     def renderHorizontal(children: List[String]): String = children.mkString(" | ")
-    def renderVertical(children: List[String]): String = children.mkString("\n")
-    def renderEmpty(): String = "∅"
+    def renderVertical(children: List[String]): String   = children.mkString("\n")
+    def renderEmpty(): String                            = "∅"
   }
 
   // HTML renderer
@@ -138,21 +138,23 @@ object DocumentAlgebras {
     Document.map(doc)(a => values.map(b => (a, b))).flatMap { pairs =>
       Document.traverse[List, (A, B), (A, B)](Leaf(pairs.head))(List(_)) match {
         case head :: _ => head
-        case Nil => Empty()
+        case Nil       => Empty()
       }
     }
   }
 
   // Fold with different algebras for different types
   def foldWithTypeClasses[A: Semigroup](doc: Document[A]): A = {
-    Document.foldLeft(doc, None: Option[A]) { (acc, value) =>
-      acc match {
-        case None => Some(value)
-        case Some(existing) => Some(existing |+| value)
+    Document
+      .foldLeft(doc, None: Option[A]) { (acc, value) =>
+        acc match {
+          case None           => Some(value)
+          case Some(existing) => Some(existing |+| value)
+        }
       }
-    }.getOrElse(
-      throw new RuntimeException("Cannot fold empty document without any values")
-    )
+      .getOrElse(
+        throw new RuntimeException("Cannot fold empty document without any values")
+      )
   }
 }
 
@@ -168,7 +170,7 @@ object DocumentComposition {
       case (Vertical(cells1), Vertical(cells2)) =>
         Vertical(cells1.zip(cells2).map { case (d1, d2) => zipWith(d1, d2)(f) })
       case (Empty(), _) | (_, Empty()) => Empty()
-      case _ => Empty() // Incompatible structures
+      case _                           => Empty() // Incompatible structures
     }
   }
 

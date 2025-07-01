@@ -34,14 +34,14 @@ header() {
 # Function to check prerequisites
 check_prerequisites() {
     header "Checking Prerequisites"
-    
+
     # Check Docker
     if ! command -v docker &> /dev/null; then
         error "Docker is not installed or not in PATH"
         exit 1
     fi
     log "✓ Docker found: $(docker --version)"
-    
+
     # Check Docker Compose
     if ! command -v docker-compose &> /dev/null; then
         warn "docker-compose not found, trying 'docker compose'"
@@ -54,21 +54,21 @@ check_prerequisites() {
         DOCKER_COMPOSE="docker-compose"
     fi
     log "✓ Docker Compose found"
-    
+
     # Check Java
     if ! command -v java &> /dev/null; then
         warn "Java not found in PATH"
     else
         log "✓ Java found: $(java -version 2>&1 | head -n 1)"
     fi
-    
+
     # Check SBT
     if ! command -v sbt &> /dev/null; then
         warn "SBT not found in PATH"
     else
         log "✓ SBT found"
     fi
-    
+
     # Check Make
     if ! command -v make &> /dev/null; then
         warn "Make not found - Makefile commands not available"
@@ -80,31 +80,31 @@ check_prerequisites() {
 # Function to clean up development environment
 cleanup() {
     header "Cleaning Up Development Environment"
-    
+
     log "Stopping Docker containers..."
     $DOCKER_COMPOSE down --remove-orphans || true
-    
+
     log "Removing unused Docker resources..."
     docker system prune -f || true
-    
+
     log "Cleaning SBT build artifacts..."
     if command -v sbt &> /dev/null; then
         sbt clean || warn "Failed to clean SBT artifacts"
     fi
-    
+
     log "✓ Cleanup completed"
 }
 
 # Function to setup development environment
 setup() {
     header "Setting Up Development Environment"
-    
+
     log "Building Docker images..."
     docker build -t document-matrix .
-    
+
     log "Starting development services..."
     $DOCKER_COMPOSE --profile dev up -d
-    
+
     log "✓ Development environment ready"
     log "Run './dev.sh status' to check service status"
 }
@@ -112,7 +112,7 @@ setup() {
 # Function to run tests
 test() {
     header "Running Tests"
-    
+
     if command -v sbt &> /dev/null; then
         log "Running SBT tests..."
         sbt test
@@ -120,14 +120,14 @@ test() {
         log "Running tests in Docker..."
         docker run --rm -v "$(pwd)":/app -w /app sbtscala/scala-sbt:openjdk-21_1.10.3_3.4.3 sbt test
     fi
-    
+
     log "✓ Tests completed"
 }
 
 # Function to format code
 format() {
     header "Formatting Code"
-    
+
     if command -v sbt &> /dev/null; then
         log "Running scalafmt..."
         sbt scalafmtAll
@@ -135,17 +135,17 @@ format() {
         log "Running scalafmt in Docker..."
         docker run --rm -v "$(pwd)":/app -w /app sbtscala/scala-sbt:openjdk-21_1.10.3_3.4.3 sbt scalafmtAll
     fi
-    
+
     log "✓ Code formatted"
 }
 
 # Function to show service status
 status() {
     header "Service Status"
-    
+
     log "Docker containers:"
     docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-    
+
     echo ""
     log "Available services:"
     echo "  • Server: http://localhost:8081"
@@ -156,7 +156,7 @@ status() {
 # Function to show logs
 logs() {
     local service="${1:-}"
-    
+
     if [ -n "$service" ]; then
         header "Logs for $service"
         $DOCKER_COMPOSE logs -f "$service"
@@ -169,23 +169,23 @@ logs() {
 # Function to run CI simulation
 ci() {
     header "Simulating CI Pipeline"
-    
+
     log "Step 1: Format check..."
     format
-    
+
     log "Step 2: Compile..."
     if command -v sbt &> /dev/null; then
         sbt compile
     else
         docker run --rm -v "$(pwd)":/app -w /app sbtscala/scala-sbt:openjdk-21_1.10.3_3.4.3 sbt compile
     fi
-    
+
     log "Step 3: Run tests..."
     test
-    
+
     log "Step 4: Build Docker image..."
     docker build -t document-matrix-ci .
-    
+
     log "✓ CI simulation completed successfully"
 }
 

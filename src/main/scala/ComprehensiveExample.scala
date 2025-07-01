@@ -9,11 +9,9 @@ import DocumentAlgebras.*
 import DocumentDSL.*
 import DocumentComposition.*
 
-/**
- * This shows off basically every functional programming concept
- * from the assignment working together. It's like a demo reel
- * but for type theory nerds.
- */
+/** This shows off basically every functional programming concept from the assignment working together. It's like a demo
+  * reel but for type theory nerds.
+  */
 object ComprehensiveExample extends App {
 
   println("🚀 Comprehensive FP Showcase")
@@ -23,13 +21,13 @@ object ComprehensiveExample extends App {
   println("🧮 Algebraic Data Types")
 
   // Sum types (sealed trait + case classes)
-  val leafDoc: Document[String] = Leaf("Hello")
+  val leafDoc: Document[String]       = Leaf("Hello")
   val horizontalDoc: Document[String] = Horizontal(List(Leaf("A"), Leaf("B")))
-  val verticalDoc: Document[String] = Vertical(List(Leaf("C"), Leaf("D")))
-  val emptyDoc: Document[String] = Empty()
+  val verticalDoc: Document[String]   = Vertical(List(Leaf("C"), Leaf("D")))
+  val emptyDoc: Document[String]      = Empty()
 
   // Product types in action
-  val position = Position(1, 2)
+  val position                      = Position(1, 2)
   val operation: DocumentOp[String] = Insert("New Value", position)
 
   println(s"Leaf: $leafDoc")
@@ -80,8 +78,8 @@ object ComprehensiveExample extends App {
   println(s"Functor map (*2): $mapped")
 
   // Applicative operations
-  val doc1 = Leaf(5)
-  val doc2 = Leaf(3)
+  val doc1              = Leaf(5)
+  val doc2              = Leaf(3)
   val applicativeResult = Document.map2(doc1, doc2)(_ + _)
   println(s"Applicative combine: $applicativeResult")
 
@@ -95,17 +93,17 @@ object ComprehensiveExample extends App {
 
   // Catamorphism - tear down structure
   val sum = Document.cata(testDoc)(
-    identity,          // what to do with leaves
-    _.sum,            // what to do with horizontal
-    _.sum,            // what to do with vertical
-    () => 0           // what to do with empty
+    identity, // what to do with leaves
+    _.sum,    // what to do with horizontal
+    _.sum,    // what to do with vertical
+    () => 0   // what to do with empty
   )
   println(s"Catamorphism (tearing down to sum): $sum")
 
   // Anamorphism - build up structure
   val unfolded = Document.ana[String, Int](3) { n =>
     if (n <= 0) Left("base")
-    else Right((List(n-1, n-2), true))
+    else Right((List(n - 1, n - 2), true))
   }
   println(s"Anamorphism result: $unfolded")
 
@@ -113,17 +111,17 @@ object ComprehensiveExample extends App {
   println("\n=== Free Monads ===")
 
   val freeProgram = for {
-    leaf1 <- createLeaf("Free")
-    leaf2 <- createLeaf("Monad")
-    combined <- createHorizontal(List(leaf1, leaf2))
+    leaf1     <- createLeaf("Free")
+    leaf2     <- createLeaf("Monad")
+    combined  <- createHorizontal(List(leaf1, leaf2))
     validated <- validateDocument(combined)
     result <- validated match {
       case Right(doc) => buildComplexDocument(List("Complex", "Document"))
-      case Left(_) => createLeaf("Fallback")
+      case Left(_)    => createLeaf("Fallback")
     }
   } yield result
 
-  val freePureResult = runPure(freeProgram)
+  val freePureResult   = runPure(freeProgram)
   val freeOptionResult = runOption(freeProgram)
   println(s"Free monad pure: $freePureResult")
   println(s"Free monad option: $freeOptionResult")
@@ -141,7 +139,7 @@ object ComprehensiveExample extends App {
   // ====== EFFECTS & VALIDATION ======
   println("\n=== Effects & Validation ===")
 
-  val validDoc = Horizontal(List(Leaf("valid"), Leaf("data")))
+  val validDoc   = Horizontal(List(Leaf("valid"), Leaf("data")))
   val invalidDoc = Empty[String]()
 
   val validationResult1 = Document.validateDocument[Id](validDoc)
@@ -153,14 +151,16 @@ object ComprehensiveExample extends App {
   // ====== ALGEBRAS ======
   println("\n=== Algebras ===")
 
-  val complexDoc = Vertical(List(
-    Horizontal(List(Leaf("A"), Leaf("B"))),
-    Horizontal(List(Leaf("C"), Leaf("D")))
-  ))
+  val complexDoc = Vertical(
+    List(
+      Horizontal(List(Leaf("A"), Leaf("B"))),
+      Horizontal(List(Leaf("C"), Leaf("D")))
+    )
+  )
 
   // Different rendering algebras
   val asciiRendered = render(complexDoc)(asciiRenderer)
-  val htmlRendered = render(complexDoc)(htmlRenderer)
+  val htmlRendered  = render(complexDoc)(htmlRenderer)
 
   println("ASCII rendering:")
   println(asciiRendered)
@@ -176,12 +176,12 @@ object ComprehensiveExample extends App {
   val empty = Document.monoid[String].empty
 
   // Semigroup associativity
-  val leftAssoc = Document.semigroup[String].combine(Document.semigroup[String].combine(doc_a, doc_b), doc_c)
+  val leftAssoc  = Document.semigroup[String].combine(Document.semigroup[String].combine(doc_a, doc_b), doc_c)
   val rightAssoc = Document.semigroup[String].combine(doc_a, Document.semigroup[String].combine(doc_b, doc_c))
   println(s"Semigroup associative: ${leftAssoc == rightAssoc}")
 
   // Monoid identity
-  val leftIdentity = Document.monoid[String].combine(empty, doc_a)
+  val leftIdentity  = Document.monoid[String].combine(empty, doc_a)
   val rightIdentity = Document.monoid[String].combine(doc_a, empty)
   println(s"Monoid left identity: ${leftIdentity == doc_a}")
   println(s"Monoid right identity: ${rightIdentity == doc_a}")
@@ -191,7 +191,7 @@ object ComprehensiveExample extends App {
 
   // Phantom types for compile-time guarantees
   val unsafeDoc = Horizontal(List(Leaf("data")))
-  val safeDoc = Document.validateAtCompileTime(unsafeDoc)
+  val safeDoc   = Document.validateAtCompileTime(unsafeDoc)
   val processed = Document.processValidDocument(safeDoc)
 
   println(s"Type-safe processing: ${processed == unsafeDoc}")
@@ -202,7 +202,7 @@ object ComprehensiveExample extends App {
   val nums1 = Horizontal(List(Leaf(1), Leaf(2)))
   val nums2 = Horizontal(List(Leaf(10), Leaf(20)))
 
-  val zipped = zipWith(nums1, nums2)(_ + _)
+  val zipped    = zipWith(nums1, nums2)(_ + _)
   val sequenced = sequence(List(Leaf(1), Leaf(2), Leaf(3)))
 
   println(s"ZipWith result: $zipped")

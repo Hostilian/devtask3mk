@@ -8,13 +8,17 @@ object SimpleExample extends App {
   println("Let's see how this document thing works...")
 
   // Make a simple document structure
-  val doc: Document[String] = Horizontal(List(
-    Leaf("Hello"),
-    Vertical(List(
-      Leaf("World"),
-      Leaf("!")
-    ))
-  ))
+  val doc: Document[String] = Horizontal(
+    List(
+      Leaf("Hello"),
+      Vertical(
+        List(
+          Leaf("World"),
+          Leaf("!")
+        )
+      )
+    )
+  )
 
   println(s"\nOur document: $doc")
 

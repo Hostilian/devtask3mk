@@ -28,7 +28,7 @@ class DocumentSpec extends AnyFlatSpec with Matchers {
 
   "Document" should "support pretty printing" in {
     val doc: Document[String] = Vertical(List(Leaf("Hello"), Horizontal(List(Leaf("World"), Leaf("!")))))
-    val printed = Cli.prettyPrint(doc)
+    val printed               = Cli.prettyPrint(doc)
     printed should include("Vertical")
     printed should include("Leaf(Hello)")
     printed should include("Horizontal")
@@ -36,7 +36,7 @@ class DocumentSpec extends AnyFlatSpec with Matchers {
 
   "Document" should "support folding" in {
     val doc: Document[Int] = Horizontal(List(Leaf(1), Leaf(2), Leaf(3)))
-    val sum = Document.fold(doc)(identity)(_.sum)(_.sum)
+    val sum                = Document.fold(doc)(identity)(_.sum)(_.sum)
     sum shouldBe 6
   }
 }
@@ -46,12 +46,12 @@ object DocumentZioSpec extends ZIOSpecDefault {
     test("monad transform with ZIO") {
       val doc: Document[Int] = Vertical(List(Leaf(1), Leaf(2)))
       for {
-        result <- Document.f[({type F[A] = ZIO[Any, Nothing, A]})#F, Int, String](i => ZIO.succeed(i.toString))(doc)
+        result <- Document.f[({ type F[A] = ZIO[Any, Nothing, A] })#F, Int, String](i => ZIO.succeed(i.toString))(doc)
       } yield assert(result)(equalTo(Vertical(List(Leaf("1"), Leaf("2")))))
     },
     test("catamorphism with ZIO") {
       val doc: Document[Int] = Horizontal(List(Leaf(1), Leaf(2), Leaf(3)))
-      val result = Document.fold(doc)(identity)(_.sum)(_.sum)
+      val result             = Document.fold(doc)(identity)(_.sum)(_.sum)
       assert(result)(equalTo(6))
     },
     test("monoid laws") {
@@ -60,11 +60,11 @@ object DocumentZioSpec extends ZIOSpecDefault {
       val doc3: Document[String] = Leaf("c")
 
       // Associativity
-      val left = Document.monoid[String].combine(Document.monoid[String].combine(doc1, doc2), doc3)
+      val left  = Document.monoid[String].combine(Document.monoid[String].combine(doc1, doc2), doc3)
       val right = Document.monoid[String].combine(doc1, Document.monoid[String].combine(doc2, doc3))
 
       // Identity
-      val leftIdentity = Document.monoid[String].combine(Document.monoid[String].empty, doc1)
+      val leftIdentity  = Document.monoid[String].combine(Document.monoid[String].empty, doc1)
       val rightIdentity = Document.monoid[String].combine(doc1, Document.monoid[String].empty)
 
       assert(left)(equalTo(right)) &&

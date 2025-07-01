@@ -3,31 +3,32 @@ package com.example
 import cats.Id
 import cats.syntax.all.*
 
-/**
- * Quick verification that the assignment requirements are met
- */
+/** Quick verification that the assignment requirements are met
+  */
 object AssignmentVerification extends App {
 
   println("=== ASSIGNMENT VERIFICATION ===")
 
   // Create test document
-  val testDoc: Document[Int] = Horizontal(List(
-    Leaf(1),
-    Vertical(List(Leaf(2), Leaf(3))),
-    Leaf(4)
-  ))
+  val testDoc: Document[Int] = Horizontal(
+    List(
+      Leaf(1),
+      Vertical(List(Leaf(2), Leaf(3))),
+      Leaf(4)
+    )
+  )
 
   println(s"Original document: $testDoc")
 
   // Test the required function f
   println("\n1. Testing f[Id](identity) = identity")
-  val identityResult = Document.f[Id, Int, Int](identity)(testDoc)
+  val identityResult    = Document.f[Id, Int, Int](identity)(testDoc)
   val isIdentityCorrect = identityResult == testDoc
   println(s"✓ f[Id](identity) == identity: $isIdentityCorrect")
 
   println("\n2. Testing f[Option](Some(_)) = Some(_)")
-  val optionResult = Document.f[Option, Int, Int](Some(_))(testDoc)
-  val expectedOption = Some(testDoc)
+  val optionResult    = Document.f[Option, Int, Int](Some(_))(testDoc)
+  val expectedOption  = Some(testDoc)
   val isOptionCorrect = optionResult == expectedOption
   println(s"✓ f[Option](Some(_)) == Some(doc): $isOptionCorrect")
 

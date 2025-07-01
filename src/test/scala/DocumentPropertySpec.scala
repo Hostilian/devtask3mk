@@ -15,7 +15,7 @@ class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks wit
       genVertical
     )
     def genHorizontal = Gen.listOf(genSized).map(Horizontal(_))
-    def genVertical = Gen.listOf(genSized).map(Vertical(_))
+    def genVertical   = Gen.listOf(genSized).map(Vertical(_))
 
     def genSized: Gen[Document[A]] = Gen.sized { size =>
       if (size <= 0) genLeaf
@@ -80,7 +80,7 @@ class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks wit
     import io.circe.syntax.*
     import io.circe.parser.decode
     val emptyDoc: Document[Int] = Empty()
-    val json = emptyDoc.asJson
+    val json                    = emptyDoc.asJson
     decode[Document[Int]](json.noSpaces) shouldBe Right(emptyDoc)
   }
 

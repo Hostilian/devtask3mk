@@ -16,7 +16,7 @@ scrape_configs:
       - targets: ['document-matrix-server:8081']
     metrics_path: '/metrics'
     scrape_interval: 5s
-    
+
   - job_name: 'docker'
     static_configs:
       - targets: ['host.docker.internal:9323']
