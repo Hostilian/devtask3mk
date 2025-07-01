@@ -1,6 +1,11 @@
 # Document Matrix
 
-A Scala project implementing a type-safe, functional document data structure with CLI and HTTP API.
+[![CI](https://github.com/your-username/devtask3mk/workflows/CI/badge.svg)](https://github.com/your-username/devtask3mk/actions)
+[![Scala Version](https://img.shields.io/badge/scala-3.4.3-red.svg)](https://scala-lang.org/)
+[![ZIO Version](https://img.shields.io/badge/zio-2.1.11-blue.svg)](https://zio.dev/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+A production-ready Scala 3 project implementing a type-safe, functional document data structure with CLI and HTTP API. Showcases advanced functional programming concepts, recursion schemes, and modern Scala ecosystem.
 
 ## Features
 
@@ -146,6 +151,33 @@ docker run -p 8080:8080 document-matrix
 ## Contributing
 
 See `docs/CONTRIBUTING.md` for development guidelines.
+
+## 🎯 **WOW FACTORS & ADVANCED FEATURES**
+
+### **Functional Programming Excellence**
+- **Higher-Kinded Types**: `Document[A]` supports any content type
+- **Recursion Schemes**: Catamorphism for structured data processing  
+- **Type Classes**: Functor, Traversable, Semigroup, Monoid instances
+- **Effect Systems**: ZIO for pure functional programming
+- **Optics/Lenses**: Deep immutable updates with Monocle
+
+### **Modern Scala 3 Features**
+- **Union Types**: For advanced type safety
+- **Given/Using**: Modern type class syntax
+- **Extension Methods**: Ergonomic API design
+- **Strict Compilation**: `-Yexplicit-nulls`, `-Ysafe-init`
+
+### **Production Readiness**
+- **Comprehensive Testing**: Unit, integration, and property-based tests
+- **CI/CD Pipeline**: GitHub Actions with full automation
+- **Docker Support**: Multi-stage builds with slim runtime
+- **Developer Experience**: VS Code integration, batch scripts, clear docs
+
+### **Performance & Scalability**
+- **Tail Recursion**: Optimized for deep document structures
+- **Immutable Data**: Thread-safe by design
+- **Effect Management**: Asynchronous processing with ZIO
+- **Memory Efficient**: Structural sharing in functional data structures
 
 ## License
 

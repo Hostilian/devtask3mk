@@ -23,7 +23,10 @@ lazy val root = project
       "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test,
       "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
       "dev.zio" %% "zio-test" % "2.1.11" % Test,
-      "dev.zio" %% "zio-test-sbt" % "2.1.11" % Test
+      "dev.zio" %% "zio-test-sbt" % "2.1.11" % Test,
+      "org.openjdk.jmh" % "jmh-core" % "1.37" % Test,
+      "org.openjdk.jmh" % "jmh-generator-annprocess" % "1.37" % Test,
+      "pl.project13.scala" % "sbt-jmh" % "0.4.7" % Test
     ),
     scalacOptions ++= Seq(
       "-deprecation",
