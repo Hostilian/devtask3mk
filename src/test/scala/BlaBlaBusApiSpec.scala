@@ -67,7 +67,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         }
       },
       test("search routes with valid parameters") {
-        val tomorrow   = LocalDate.now().plusDays(1)
+        val tomorrow   = LocalDate.now().nn.plusDays(1)
         val passengers = List(Passenger("1", 30), Passenger("2", 25))
 
         for {
@@ -86,7 +86,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         }
       },
       test("get fares with filters") {
-        val today = LocalDate.now()
+        val today = LocalDate.now().nn
 
         for {
           client <- ZIO.service[BlaBlaBusApiClient]
@@ -221,7 +221,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
     ),
     suite("Integration Testing")(
       test("full workflow: search and display") {
-        val tomorrow = LocalDate.now().plusDays(1)
+        val tomorrow = LocalDate.now().nn.plusDays(1)
 
         for {
           client <- ZIO.service[BlaBlaBusApiClient]
@@ -234,7 +234,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
           doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(1, 2, tomorrow, trips)
         } yield {
           assertTrue(trips.nonEmpty) &&
-          assertTrue(doc.prettyPrint.contains("Search Results"))
+          assertTrue(Cli.prettyPrint(doc).contains("Search Results"))
         }
       },
       test("caching behavior simulation") {

@@ -57,7 +57,7 @@ class AdvancedDocumentSpec extends AnyFlatSpec with Matchers {
   "DocumentError ADT" should "demonstrate error sum types" in {
     val errors: List[DocumentError] = List(
       EmptyDocumentError,
-      ParseError("invalid syntax"),
+      DocumentParseError("invalid syntax"),
       ValidationError("field", "reason")
     )
 
