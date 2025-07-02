@@ -26,7 +26,7 @@ import scala.util.Try
 // Implicit decoder for LocalDate query params
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
-    Try(LocalDate.parse(str)).toEither.left.map(t => ParseFailure("Invalid date", t.getMessage))
+    Try(LocalDate.parse(str)).toEither.left.map(t => ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error")))
   }
 object DateParam extends org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
