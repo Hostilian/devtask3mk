@@ -258,12 +258,14 @@ class BlaBlaBusApiClientImpl(
       date: LocalDate,
       passengers: List[Passenger]
   ): Task[List[Trip]] = {
-    searchRoutes(SearchRequest(
-      origin_id = originId,
-      destination_id = destinationId,
-      date = date.toString,
-      passengers = Some(passengers)
-    ))
+    searchRoutes(
+      SearchRequest(
+        origin_id = originId,
+        destination_id = destinationId,
+        date = date.toString,
+        passengers = Some(passengers)
+      )
+    )
   }
 
   def getFares(
@@ -332,28 +334,36 @@ object BlaBlaBusDocumentProcessor {
 
   def errorToDocument(error: BlaBlaBusApiError): Document[String] = {
     error match {
-      case HttpError(status, message) => 
-        Vertical(List(
-          Leaf(s"❌ HTTP Error ${status.code}"),
-          Leaf(message)
-        ))
+      case HttpError(status, message) =>
+        Vertical(
+          List(
+            Leaf(s"❌ HTTP Error ${status.code}"),
+            Leaf(message)
+          )
+        )
       case NetworkError(cause) =>
-        Vertical(List(
-          Leaf("🌐 Network Error"),
-          Leaf("Check your internet connection"),
-          Leaf(cause.getMessage)
-        ))
+        Vertical(
+          List(
+            Leaf("🌐 Network Error"),
+            Leaf("Check your internet connection"),
+            Leaf(cause.getMessage)
+          )
+        )
       case RateLimitError(retryAfter) =>
         val retryMsg = retryAfter.map(d => s"Retry after ${d.toMinutes} minutes").getOrElse("Try again later")
-        Vertical(List(
-          Leaf("⏱️ Rate Limit Exceeded"),
-          Leaf(retryMsg)
-        ))
+        Vertical(
+          List(
+            Leaf("⏱️ Rate Limit Exceeded"),
+            Leaf(retryMsg)
+          )
+        )
       case BusApiParseError(message) =>
-        Vertical(List(
-          Leaf("🔧 Parse Error"),
-          Leaf(message)
-        ))
+        Vertical(
+          List(
+            Leaf("🔧 Parse Error"),
+            Leaf(message)
+          )
+        )
     }
   }
 }
@@ -370,7 +380,7 @@ object BlaBlaBusApiClient {
 
   val mockLayer: ZLayer[Any, Nothing, BlaBlaBusApiClient] =
     ZLayer.succeed(new MockBlaBlaBusApiClient)
-    
+
   val test: ZLayer[Any, Nothing, BlaBlaBusApiClient] = mockLayer
 }
 

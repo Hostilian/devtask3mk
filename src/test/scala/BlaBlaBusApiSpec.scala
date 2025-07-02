@@ -12,9 +12,9 @@ import com.example.Trip
 object BlaBlaBusApiSpec extends ZIOSpecDefault {
   def spec = suite("BlaBlaBusApiSpec")(
     test("searchResultsToDocument renders trips correctly") {
-      val originId = 1
+      val originId      = 1
       val destinationId = 2
-      val date = LocalDate.parse("2025-07-02")
+      val date          = LocalDate.parse("2025-07-02")
       val trips = List(
         Trip(
           id = "demo-trip-1",
@@ -31,7 +31,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
           passengers = List.empty
         )
       )
-      val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date, trips)
+      val doc     = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date, trips)
       val content = doc.prettyPrint
       assertTrue(
         content.contains("Trip ID: | demo-trip-1"),
@@ -41,11 +41,11 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
       )
     },
     test("searchResultsToDocument shows no routes found message when empty") {
-      val originId = 1
+      val originId      = 1
       val destinationId = 2
-      val date = LocalDate.parse("2025-07-02")
-      val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date, Nil)
-      val content = doc.prettyPrint
+      val date          = LocalDate.parse("2025-07-02")
+      val doc           = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date, Nil)
+      val content       = doc.prettyPrint
       assertTrue(content.toLowerCase.contains("no routes found"))
     },
     test("tripToDocument renders trip details correctly") {
@@ -63,7 +63,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         legs = List.empty,
         passengers = List.empty
       )
-      val doc = BlaBlaBusDocumentProcessor.tripToDocument(trip)
+      val doc     = BlaBlaBusDocumentProcessor.tripToDocument(trip)
       val content = doc.prettyPrint
       assertTrue(
         content.contains("Trip ID: | trip-xyz"),
@@ -80,7 +80,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         time_zone = "Europe/Paris",
         latitude = Some(48.8352)
       )
-      val doc = BlaBlaBusDocumentProcessor.stopToDocument(stop)
+      val doc     = BlaBlaBusDocumentProcessor.stopToDocument(stop)
       val content = doc.prettyPrint
       assertTrue(
         content.contains("Stop ID: | 42"),

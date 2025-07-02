@@ -1,8 +1,8 @@
 package com.example
 
 import scala.language.unsafeNulls // DISABLE EXPLICIT NULLS FOR THIS FILE
-import cats.syntax.semigroupk._ // for <+>
-import com.example.Document._   // for Vertical, prettyPrint, etc.
+import cats.syntax.semigroupk._   // for <+>
+import com.example.Document._     // for Vertical, prettyPrint, etc.
 import org.http4s.QueryParamDecoder
 import org.http4s.ParseFailure
 import com.comcast.ip4s.Host
@@ -31,8 +31,9 @@ implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
     if (safeStr.trim.isEmpty) {
       Left(ParseFailure("Missing date", "Date parameter is empty"))
     } else {
-      Try(LocalDate.parse(safeStr)).toEither
-        .left.map(t => ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error")))
+      Try(LocalDate.parse(safeStr)).toEither.left.map(t =>
+        ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error"))
+      )
     }
   }
 object DateParam extends org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher[LocalDate]("date")

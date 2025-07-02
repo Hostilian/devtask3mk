@@ -238,10 +238,10 @@ object Document {
   // Extension method for pretty printing
   extension [A](doc: Document[A]) {
     def prettyPrint: String = doc match {
-      case Leaf(value) => value.toString
+      case Leaf(value)       => value.toString
       case Horizontal(cells) => cells.map(_.prettyPrint).mkString(" | ")
-      case Vertical(cells) => cells.map(_.prettyPrint).mkString("\n")
-      case Empty() => ""
+      case Vertical(cells)   => cells.map(_.prettyPrint).mkString("\n")
+      case Empty()           => ""
     }
   }
 }
