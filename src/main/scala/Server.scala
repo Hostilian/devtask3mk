@@ -26,12 +26,14 @@ import scala.util.Try
 // Implicit decoder for LocalDate query params
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
-    // Defensive: handle nulls from Java interop
-    val safeStr = Option(str).getOrElse("").nn
-    if (safeStr.trim.isEmpty) Left(ParseFailure("Missing date", "Date parameter is empty"))
-    else Try(LocalDate.parse(safeStr)).toEither
-      .map(_.nn) // ensure LocalDate, not LocalDate | Null
-      .left.map(t => ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error").nn))
+    val safeStr = Option(str).getOrElse("")
+    if (safeStr == null || safeStr.trim.nn.isEmpty) {
+      Left(ParseFailure("Missing date", "Date parameter is empty"))
+    } else {
+      Try(LocalDate.parse(safeStr)).toEither
+        .left.map(t => ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error").nn))
+        .map(_.nn)
+    }
   }
 object DateParam extends org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
