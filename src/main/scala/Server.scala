@@ -1,5 +1,9 @@
 package com.example
 
+import cats.syntax.semigroupk._ // for <+>
+import com.example.Document._ // for Vertical, prettyPrint, etc.
+import org.http4s.QueryParamDecoder
+import org.http4s.ParseFailure
 import com.comcast.ip4s.Host
 import com.comcast.ip4s.Port
 import io.circe.syntax.*
@@ -13,15 +17,26 @@ import zio.Runtime
 import zio.Task
 import zio.Unsafe
 import zio.interop.catz.*
-import zio.json.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+
+// Query parameter extractors (move outside Server object to avoid cyclic reference)
+import org.http4s.dsl.impl.{QueryParamDecoderMatcher, OptionalQueryParamDecoderMatcher}
+object OriginParam extends QueryParamDecoderMatcher[Int]("origin")
+object DestinationParam extends QueryParamDecoderMatcher[Int]("destination")
+object DateParam extends OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
 object Server {
   val dsl = Http4sDsl[Task]
   import dsl.*
 
   implicit val documentEntityDecoder: EntityDecoder[Task, Document[String]] = jsonOf[Task, Document[String]]
+
+  // Implicit decoder for LocalDate query params
+  implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
+    QueryParamDecoder[String].emap { str =>
+      Either.catchNonFatal(LocalDate.parse(str)).left.map(t => ParseFailure("Invalid date", t.getMessage))
+    }
 
   // BlaBlaCar Bus API integration routes
   val busApiRoutes: HttpRoutes[Task] = HttpRoutes.of[Task] {
@@ -131,11 +146,6 @@ object Server {
       )
       Ok(resultsDoc.prettyPrint)
   }
-
-  // Query parameter extractors
-  object OriginParam extends QueryParamDecoderMatcher[Int]("origin")
-  object DestinationParam extends QueryParamDecoderMatcher[Int]("destination") 
-  object DateParam extends OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
   val routes: HttpRoutes[Task] = HttpRoutes.of[Task] {
     case req @ POST -> Root / "render" =>
