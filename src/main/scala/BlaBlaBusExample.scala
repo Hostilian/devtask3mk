@@ -4,6 +4,7 @@ import zio._
 import zio.Console._
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.io.IOException
 import scala.language.unsafeNulls
 import scala.concurrent.duration._
 
@@ -17,7 +18,7 @@ import com.example._
 object BlaBlaBusExample extends ZIOAppDefault {
   
   def run: ZIO[ZIOAppArgs, Any, Any] = {
-    val program: ZIO[Any, IOException, Unit] = for {
+    val program: ZIO[Any, java.io.IOException, Unit] = for {
       _ <- printLine("🚌 BlaBlaCar Bus API Integration Demo")
       _ <- printLine("=" * 50)
       _ <- printLine("")
@@ -44,10 +45,10 @@ object BlaBlaBusExample extends ZIOAppDefault {
       
     } yield ()
     
-    program
+    program.exitCode
   }
   
-  private def demonstrateStops(): ZIO[Any, IOException, Unit] = {
+  private def demonstrateStops(): ZIO[Any, java.io.IOException, Unit] = {
     for {
       _ <- printLine("Mock bus stops:")
       _ <- printLine("1. Paris Bercy - Main station in central Paris")
@@ -56,7 +57,7 @@ object BlaBlaBusExample extends ZIOAppDefault {
     } yield ()
   }
   
-  private def demonstrateRouteSearch(): ZIO[Any, IOException, Unit] = {
+  private def demonstrateRouteSearch(): ZIO[Any, java.io.IOException, Unit] = {
     for {
       _ <- printLine("Mock route search results:")
       _ <- printLine("Paris → Lyon:")
@@ -66,7 +67,7 @@ object BlaBlaBusExample extends ZIOAppDefault {
     } yield ()
   }
   
-  private def demonstrateTripDetails(): ZIO[Any, IOException, Unit] = {
+  private def demonstrateTripDetails(): ZIO[Any, java.io.IOException, Unit] = {
     for {
       _ <- printLine("Mock trip details:")
       _ <- printLine("Regular trip: €25.99")
