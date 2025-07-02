@@ -191,13 +191,11 @@ class BlaBlaBusApiClientImpl(
 
   def getStops(): Task[List[BusStop]] = {
     val url = s"${config.baseUrl}/${config.version}/stops"
-    ZIO.scoped {
-      for {
-        decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
-        request = Request.get(decodedUrl).addHeaders(baseHeaders)
-        stopsResponse <- makeRequest[StopsResponse](request)
-      } yield stopsResponse.stops
-    }
+    for {
+      decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
+      request = Request.get(decodedUrl).addHeaders(baseHeaders)
+      stopsResponse <- makeRequest[StopsResponse](request)
+    } yield stopsResponse.stops
   }
 
   def getFares(
@@ -205,28 +203,24 @@ class BlaBlaBusApiClientImpl(
   ): Task[List[Fare]] = {
     val queryParams = buildFareQueryParams(updatedAfter)
     val url = s"${config.baseUrl}/${config.version}/fares$queryParams"
-    ZIO.scoped {
-      for {
-        decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
-        request = Request.get(decodedUrl).addHeaders(baseHeaders)
-        faresResponse <- makeRequest[FaresResponse](request)
-      } yield faresResponse.fares
-    }
+    for {
+      decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
+      request = Request.get(decodedUrl).addHeaders(baseHeaders)
+      faresResponse <- makeRequest[FaresResponse](request)
+    } yield faresResponse.fares
   }
 
   def searchRoutes(request: SearchRequest): Task[List[Trip]] = {
     val url = s"${config.baseUrl}/${config.version}/search"
     val requestBody = request.toJson
-    ZIO.scoped {
-      for {
-        decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
-        httpRequest = Request
-          .post(decodedUrl, Body.fromString(requestBody))
-          .addHeaders(baseHeaders)
-          .addHeader(Header.ContentType(MediaType.application.json))
-        tripsResponse <- makeRequest[TripsResponse](httpRequest)
-      } yield tripsResponse.trips
-    }
+    for {
+      decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
+      httpRequest = Request
+        .post(decodedUrl, Body.fromString(requestBody))
+        .addHeaders(baseHeaders)
+        .addHeader(Header.ContentType(MediaType.application.json))
+      tripsResponse <- makeRequest[TripsResponse](httpRequest)
+    } yield tripsResponse.trips
   }
 
   def searchRoutes(
