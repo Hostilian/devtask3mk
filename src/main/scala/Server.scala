@@ -60,7 +60,7 @@ object Server {
           case Right(request) =>
             Try(LocalDate.parse(request.date)) match {
               case scala.util.Success(parsedDate0) =>
-                val parsedDate = parsedDate0.nn
+                val parsedDate = parsedDate0
                 val mockTrips = List(
                   Trip(
                     id = "demo-trip-1",
