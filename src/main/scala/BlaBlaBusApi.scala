@@ -166,28 +166,30 @@ class BlaBlaBusApiClientImpl(
   )
 
   private def makeRequest[T: JsonDecoder](request: Request): Task[T] =
-    client
-      .request(request)
-      .timeout(config.timeout)
-      .someOrFail(HttpError(Status.RequestTimeout, "Request timed out"))
-      .retry(Schedule.recurs(config.retries))
-      .mapError {
-        case e: BlaBlaBusApiError => e
-        case e: Throwable       => NetworkError(e)
-      }
-      .flatMap { response =>
-        if (response.status.isSuccess) {
-          response.body.asString.flatMap { body =>
-            ZIO
-              .fromEither(body.fromJson[T])
-              .mapError(e => BusApiParseError(s"Failed to parse response: $e. Body: $body"))
-          }
-        } else {
-          response.body.asString.flatMap(body =>
-            ZIO.fail(HttpError(response.status, s"Request failed with status ${response.status}. Body: $body"))
-          )
+    ZIO.scoped {
+      client
+        .request(request)
+        .timeout(config.timeout)
+        .someOrFail(HttpError(Status.RequestTimeout, "Request timed out"))
+        .retry(Schedule.recurs(config.retries))
+        .mapError {
+          case e: BlaBlaBusApiError => e
+          case e: Throwable       => NetworkError(e)
         }
-      }
+        .flatMap { response =>
+          if (response.status.isSuccess) {
+            response.body.asString.flatMap { body =>
+              ZIO
+                .fromEither(body.fromJson[T])
+                .mapError(e => BusApiParseError(s"Failed to parse response: $e. Body: $body"))
+            }
+          } else {
+            response.body.asString.flatMap(body =>
+              ZIO.fail(HttpError(response.status, s"Request failed with status ${response.status}. Body: $body"))
+            )
+          }
+        }
+    }
 
   def getStops(): Task[List[BusStop]] = {
     val url = s"${config.baseUrl}/${config.version}/stops"
