@@ -106,14 +106,24 @@ object Document {
 
   // Semigroup and Monoid - for combining documents
   implicit def semigroup[A]: cats.Semigroup[Document[A]] = new cats.Semigroup[Document[A]] {
-    def combine(x: Document[A], y: Document[A]): Document[A] = (x, y) match {
-      case (Empty(), d)                     => d
-      case (d, Empty())                     => d
-      case (Horizontal(c1), Horizontal(c2)) => Horizontal(c1 ++ c2)
-      case (Vertical(c1), Vertical(c2))     => Vertical(c1 ++ c2)
-      case (Vertical(c1), d2)               => Vertical(c1 :+ d2)
-      case (d1, Vertical(c2))               => Vertical(d1 +: c2)
-      case (d1, d2)                         => Vertical(List(d1, d2))
+    def combine(x: Document[A], y: Document[A]): Document[A] = {
+      def flattenVertical(doc: Document[A]): List[Document[A]] = doc match {
+        case Vertical(cells) => cells.flatMap(flattenVertical)
+        case other           => List(other)
+      }
+      
+      def flattenHorizontal(doc: Document[A]): List[Document[A]] = doc match {
+        case Horizontal(cells) => cells.flatMap(flattenHorizontal)
+        case other             => List(other)
+      }
+      
+      (x, y) match {
+        case (Empty(), d) => d
+        case (d, Empty()) => d
+        case (Horizontal(c1), Horizontal(c2)) => Horizontal(c1 ++ c2)
+        case (Vertical(c1), Vertical(c2)) => Vertical(c1 ++ c2)
+        case (d1, d2) => Vertical(flattenVertical(d1) ++ flattenVertical(d2))
+      }
     }
   }
 
