@@ -26,7 +26,7 @@ class DocumentSpec extends AnyFlatSpec with Matchers {
   "Document" should "support semigroup combine" in {
     val doc1: Document[Int] = Horizontal(List(Leaf(1)))
     val doc2: Document[Int] = Horizontal(List(Leaf(2)))
-    Document.semigroup[Int].combine(doc1, doc2) shouldBe Vertical(List(doc1, doc2))
+    Document.semigroup[Int].combine(doc1, doc2) shouldBe Horizontal(List(Leaf(1), Leaf(2)))
   }
 
   "Document" should "support pretty printing" in {

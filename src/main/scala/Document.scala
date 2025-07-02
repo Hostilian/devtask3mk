@@ -110,6 +110,7 @@ object Document {
       (x, y) match {
         case (Empty(), d) => d
         case (d, Empty()) => d
+        case (Horizontal(c1), Horizontal(c2)) => Horizontal(c1 ++ c2)
         case (Vertical(c1), Vertical(c2)) => Vertical(c1 ++ c2)
         case (Vertical(c1), d2) => Vertical(c1 :+ d2)
         case (d1, Vertical(c2)) => Vertical(d1 +: c2)
