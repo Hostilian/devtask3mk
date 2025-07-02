@@ -254,7 +254,7 @@ object BlaBlaBusDocumentProcessor {
       Horizontal(List(Leaf("Fare ID:"), Leaf(fare.id.toString))),
       Horizontal(List(Leaf("From:"), Leaf(fare.origin_id.toString))),
       Horizontal(List(Leaf("To:"), Leaf(fare.destination_id.toString))),
-      Horizontal(List(Leaf(s"Price:"), Leaf(s"${fare.price_cents / 100.0} ${fare.price_currency}")))
+      Horizontal(List(Leaf("Price:"), Leaf(s"${fare.price_cents / 100.0} ${fare.price_currency}")))
     ))
   }
 
@@ -270,9 +270,7 @@ object BlaBlaBusDocumentProcessor {
   }
 
   def searchResultsToDocument(origin: Int, destination: Int, date: LocalDate, trips: List[Trip]): Document[String] = {
-    val header = Horizontal(List(
-      Leaf(s"Search Results for $origin to $destination on $date")
-    ))
+    val header: Document[String] = Horizontal(List(Leaf(s"Search Results for $origin to $destination on $date")))
     val tripsDocs = trips.map(tripToDocument)
     Vertical(header :: tripsDocs)
   }
