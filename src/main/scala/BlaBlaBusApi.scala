@@ -264,7 +264,7 @@ class BlaBlaBusApiClientImpl(
     val request = SearchRequest(
       origin_id = originId,
       destination_id = destinationId,
-      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE)).getOrElse("").nn,
+      date = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
@@ -342,33 +342,32 @@ object BlaBlaBusDocumentProcessor {
   }
   def tripToDocument(trip: Trip): Document[String] = {
     val priceEuros = BigDecimal(trip.price_cents) / 100
-    val header = Leaf(s"🚌 Trip ${trip.id}")
+    val header = Leaf(s"\ud83d\ude8c Trip ${trip.id}")
     val pricing = trip.price_promo_cents match {
       case Some(promoCents) if trip.is_promo.contains(true) =>
         val promoEuros = BigDecimal(promoCents) / 100
         Horizontal(List(
-          Leaf(s"💰 €$promoEuros"),
-          Leaf(s"(was €$priceEuros)"),
-          Leaf("🏷️ PROMO")
+          Leaf(s"\ud83d\udcb0 \u20ac$promoEuros"),
+          Leaf(s"(was \u20ac$priceEuros)"),
+          Leaf("\ud83c\udff7\ufe0f PROMO")
         ))
       case _ =>
-        Leaf(s"💰 €$priceEuros")
+        Leaf(s"\ud83d\udcb0 \u20ac$priceEuros")
     }
     val timing = Horizontal(List(
-      Leaf(s"🕐 ${formatTime(trip.departure)}"),
-      Leaf("→"),
-      Leaf(s"🕐 ${formatTime(trip.arrival)}")
+      Leaf(s"\ud83d\udd50 ${formatTime(trip.departure)}"),
+      Leaf("\u2192"),
+      Leaf(s"\ud83d\udd50 ${formatTime(trip.arrival)}")
     ))
     val availability = if (trip.available) {
-      Leaf("✅ Available")
+      Leaf("\u2705 Available")
     } else {
-      Leaf("❌ Sold out")
+      Leaf("\u274c Sold out")
     }
     val features = List(
-      trip.is_refundable.filter(identity).map(_ => "💳 Refundable"),
-      if (trip.legs.length > 1) Some(s"🔄 ${trip.legs.length} legs") else None
+      trip.is_refundable.filter(identity).map(_ => "\ud83d\udcb3 Refundable"),
+      if (trip.legs.length > 1) Some(s"\ud83d\udd04 ${trip.legs.length} legs") else None
     ).flatten
-    // Fix type for featuresDoc and ensure List[Document[String]]
     val featuresDoc: List[Document[String]] =
       if (features.nonEmpty) List(Leaf(features.mkString(" \u2022 "))) else List.empty
     Vertical(List(header, pricing, timing, availability) ++ featuresDoc)

@@ -29,8 +29,11 @@ import org.http4s.ParseFailure
 // Implicit decoder for LocalDate query params
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
-    Try(LocalDate.parse(Option(str).getOrElse("").nn)).toEither.left.map(t => ParseFailure("Invalid date", t.getMessage.nn))
-  }
+    val safeStr = Option(str).getOrElse("")
+    if (safeStr.nonEmpty)
+      Try(LocalDate.parse(safeStr)).toEither.left.map(t => ParseFailure("Invalid date", t.getMessage.nn))
+    else Left(ParseFailure("Invalid date", "Empty string"))
+  }.map(_.nn)
 object DateParam extends org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
 // Query parameter extractors (move outside Server object to avoid cyclic reference)
@@ -53,7 +56,7 @@ object Server {
         bodyStr <- req.as[String]
         searchReq = bodyStr.fromJson[SearchRequest]
         result <- searchReq match {
-          case Right(request: SearchRequest) =>
+          case Right(request) =>
             val mockTrips = List(
               Trip(
                 id = "demo-trip-1",
@@ -71,7 +74,7 @@ object Server {
             val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
               request.origin_id,
               request.destination_id,
-              LocalDate.parse(request.date.nn),
+              LocalDate.parse(request.date).nn,
               mockTrips
             )
             Ok(Cli.prettyPrint(doc))
@@ -86,6 +89,11 @@ object Server {
         BusStop(
           id = 1,
           short_name = "Paris Bercy",
+          long_name = "Paris Bercy Station",
+          time_zone = "Europe/Paris",
+          latitude = Some(48.838424),
+          longitude = Some(2.382411),
+          destinations_ids = List(2, 3),
           address = Some("48 bis Boulevard de Bercy 75012 Paris")
         )
       )
