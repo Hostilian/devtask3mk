@@ -27,7 +27,7 @@ import scala.util.Try
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
     val safeStr = Option(str).getOrElse("")
-    if (safeStr.trim.isEmpty) {
+    if (safeStr.trim.nn.isEmpty) {
       Left(ParseFailure("Missing date", "Date parameter is empty"))
     } else {
       Try(LocalDate.parse(safeStr)).toEither
