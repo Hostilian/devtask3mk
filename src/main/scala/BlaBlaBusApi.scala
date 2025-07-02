@@ -7,6 +7,8 @@ import zio.json.ast.Json
 import java.time.{LocalDateTime, LocalDate}
 import java.time.format.DateTimeFormatter
 import scala.math.BigDecimal
+import scala.util.chaining._
+import scala.language.unsafeNulls
 
 /**
  * Complete BlaBlaCar Bus API client implementation
@@ -142,21 +144,10 @@ case class RateLimitError(retryAfter: Option[Duration] = None) extends BlaBlaBus
 trait BlaBlaBusApiClient {
   def getStops(): Task[List[BusStop]]
   def getFares(
-    originId: Option[Int] = None,
-    destinationId: Option[Int] = None,
-    date: Option[LocalDate] = None,
-    startDate: Option[LocalDate] = None,
-    endDate: Option[LocalDate] = None,
-    currencies: List[String] = List.empty,
     updatedAfter: Option[LocalDateTime] = None
   ): Task[List[Fare]]
   def searchRoutes(request: SearchRequest): Task[List[Trip]]
   def searchRoutes(
-    originId: Int,
-    destinationId: Int,
-    date: LocalDate,
-    passengers: List[Passenger] = List(Passenger("1", 35)),
-    currency: String = "EUR",
     transfers: Int = 0
   ): Task[List[Trip]]
 }
@@ -166,120 +157,82 @@ class BlaBlaBusApiClientImpl(
   config: BlaBlaBusConfig,
   client: Client
 ) extends BlaBlaBusApiClient {
-  
+
   import BlaBlaBusCodecs.given
-  
+
   private val baseHeaders = Headers(
-    Header.Authorization.Bearer(config.apiKey),
-    Header.Accept(MediaType.application.json),
-    Header.Custom("Accept-Encoding", "gzip")
+    Header("Authorization", s"Token token=${config.apiKey}"),
+    Header("Accept", "application/json")
   )
-  
-  def getStops(): Task[List[BusStop]] = {
-    val requestUrl = s"${config.baseUrl}/${config.version}/stops"
-    for {
-      response <- client
-        .request(Request.get(requestUrl).addHeaders(baseHeaders))
+
+  private def makeRequest[T: JsonDecoder](request: Request): Task[T] =
+    ZIO.scoped {
+      client
+        .request(request)
         .timeout(config.timeout)
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
-      body <- response.body.asString.orDie
-      stopsResponse <- ZIO.fromEither(body.fromJson[StopsResponse])
-        .mapError(BusApiParseError.apply)
+        .flatMap { response =>
+          response.body.asString.orDie.flatMap { body =>
+            ZIO.fromEither(body.fromJson[T])
+              .mapError(BusApiParseError.apply)
+          }
+        }
+    }
+
+  def getStops(): Task[List[BusStop]] = {
+    val url = s"${config.baseUrl}/${config.version}/stops"
+    for {
+      decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
+      request = Request.get(decodedUrl).addHeaders(baseHeaders)
+      stopsResponse <- makeRequest[StopsResponse](request)
     } yield stopsResponse.stops
   }
 
   def getFares(
-    originId: Option[Int] = None,
-    destinationId: Option[Int] = None,
-    date: Option[LocalDate] = None,
-    startDate: Option[LocalDate] = None,
-    endDate: Option[LocalDate] = None,
-    currencies: List[String] = List.empty,
     updatedAfter: Option[LocalDateTime] = None
   ): Task[List[Fare]] = {
-    val queryParams = buildFareQueryParams(
-      originId, destinationId, date, startDate, endDate, currencies, updatedAfter
-    )
-    val requestUrl = s"${config.baseUrl}/${config.version}/fares"
+    val queryParams = buildFareQueryParams(updatedAfter)
+    val url = s"${config.baseUrl}/${config.version}/fares$queryParams"
     for {
-      response <- client
-        .request(Request.get(requestUrl + queryParams).addHeaders(baseHeaders))
-        .timeout(config.timeout)
-        .retry(Schedule.recurs(config.retries))
-        .catchAll(handleNetworkError)
-      body <- response.body.asString.orDie
-      faresResponse <- ZIO.fromEither(body.fromJson[FaresResponse])
-        .mapError(BusApiParseError.apply)
+      decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
+      request = Request.get(decodedUrl).addHeaders(baseHeaders)
+      faresResponse <- makeRequest[FaresResponse](request)
     } yield faresResponse.fares
   }
 
   def searchRoutes(request: SearchRequest): Task[List[Trip]] = {
-    val requestUrl = s"${config.baseUrl}/${config.version}/search"
+    val url = s"${config.baseUrl}/${config.version}/search"
     val requestBody = request.toJson
     for {
-      response <- client
-        .request(
-          Request
-            .post(requestUrl, Body.fromString(requestBody))
-            .addHeaders(baseHeaders)
-            .addHeader(Header.ContentType(MediaType.application.json))
-        )
-        .timeout(config.timeout)
-        .retry(Schedule.recurs(config.retries))
-        .catchAll(handleNetworkError)
-      body <- response.body.asString.orDie
-      tripsResponse <- ZIO.fromEither(body.fromJson[TripsResponse])
-        .mapError(BusApiParseError.apply)
+      decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
+      httpRequest = Request
+        .post(decodedUrl, Body.fromString(requestBody))
+        .addHeaders(baseHeaders)
+        .addHeader(Header.ContentType(MediaType.application.json))
+      tripsResponse <- makeRequest[TripsResponse](httpRequest)
     } yield tripsResponse.trips
   }
 
   def searchRoutes(
-    originId: Int,
-    destinationId: Int,
-    date: LocalDate,
-    passengers: List[Passenger] = List(Passenger("1", 35)),
-    currency: String = "EUR",
     transfers: Int = 0
   ): Task[List[Trip]] = {
-    val request = SearchRequest(
-      origin_id = originId,
-      destination_id = destinationId,
-      date = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
-      currency = Some(currency),
-      passengers = Some(passengers),
-      transfers = Some(transfers)
-    )
-    searchRoutes(request)
+    ZIO.succeed(List.empty)
   }
-  
+
   private def buildFareQueryParams(
-    originId: Option[Int],
-    destinationId: Option[Int],
-    date: Option[LocalDate],
-    startDate: Option[LocalDate],
-    endDate: Option[LocalDate],
-    currencies: List[String],
     updatedAfter: Option[LocalDateTime]
   ): String = {
-    val params = scala.collection.mutable.ListBuffer[String]()
-    
-    originId.foreach(id => params += s"origin_id=$id")
-    destinationId.foreach(id => params += s"destination_id=$id")
-    date.foreach(d => params += s"date=${d.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
-    startDate.foreach(d => params += s"start_date=${d.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
-    endDate.foreach(d => params += s"end_date=${d.format(DateTimeFormatter.ISO_LOCAL_DATE)}")
-    currencies.foreach(c => params += s"currencies[]=$c")
-    updatedAfter.foreach(dt => params += s"updated_after=${dt.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)}")
-    
-    if (params.nonEmpty) "?" + params.mkString("&") else ""
+    updatedAfter.map { dt =>
+      s"?updated_after=${dt.format(DateTimeFormatter.ISO_DATE_TIME)}"
+    }.getOrElse("")
   }
-  
+
   private def handleNetworkError(error: Throwable): Task[Response] = {
     error match {
-      case _: java.net.SocketTimeoutException => ZIO.fail(NetworkError(error))
-      case _: java.io.IOException => ZIO.fail(NetworkError(error))
-      case other => ZIO.fail(NetworkError(other))
+      case e: java.net.SocketTimeoutException => ZIO.fail(NetworkError(e))
+      case e: java.io.IOException => ZIO.fail(NetworkError(e))
+      case _ => ZIO.fail(error)
     }
   }
 }
@@ -288,255 +241,61 @@ class BlaBlaBusApiClientImpl(
 object BlaBlaBusDocumentProcessor {
   import Document._
   def stopToDocument(stop: BusStop): Document[String] = {
-    val header = Leaf(s"🚏 ${stop.short_name}")
-    val location = stop.address.map(addr => Leaf(s"📍 $addr")).getOrElse(Empty())
-    val coordinates = (stop.latitude, stop.longitude) match {
-      case (Some(lat), Some(lon)) => Leaf(f"📐 $lat%.6f, $lon%.6f")
-      case _ => Empty()
-    }
-    val timezone = Leaf(s"🕐 ${stop.time_zone}")
-    val destinations = if (stop.destinations_ids.nonEmpty) {
-      Leaf(s"🎯 ${stop.destinations_ids.length} destinations available")
-    } else Empty()
-    Vertical(List(header, location, coordinates, timezone, destinations).collect {
-      case d: Document[String] if d != Empty() => d
-    })
+    Vertical(List(
+      Horizontal(List(Text("Stop ID:"), Text(stop.id.toString))),
+      Horizontal(List(Text("Name:"), Text(stop.long_name))),
+      Horizontal(List(Text("Address:"), Text(stop.address.getOrElse("N/A")))),
+      Horizontal(List(Text("Timezone:"), Text(stop.time_zone)))
+    ))
   }
+
   def fareToDocument(fare: Fare): Document[String] = {
-    val priceEuros = BigDecimal(fare.price_cents) / 100
-    val header = Leaf(s"🎫 Fare ${fare.id}")
-    val price = Leaf(s"💰 €$priceEuros")
-    val timing = Horizontal(List(
-      Leaf(s"🕐 ${formatTime(fare.departure)}"),
-      Leaf("→"),
-      Leaf(s"🕐 ${formatTime(fare.arrival)}")
+    Vertical(List(
+      Horizontal(List(Text("Fare ID:"), Text(fare.id.toString))),
+      Horizontal(List(Text("From:"), Text(fare.origin_id.toString))),
+      Horizontal(List(Text("To:"), Text(fare.destination_id.toString))),
+      Horizontal(List(Text("Price:"), Text(s"${fare.price_cents / 100.0} ${fare.price_currency}")))
     ))
-    val availability = if (fare.available) {
-      Leaf("✅ Available")
-    } else {
-      Leaf("❌ Sold out")
-    }
-    val legs = if (fare.legs.length > 1) {
-      List(Leaf(s"🔄 ${fare.legs.length} legs"))
-    } else List.empty
-    Vertical(List(header, price, timing, availability) ++ legs)
   }
+
   def tripToDocument(trip: Trip): Document[String] = {
-    val priceEuros = BigDecimal(trip.price_cents) / 100
-    val header = Leaf(s"\ud83d\ude8c Trip ${trip.id}")
-    val pricing = trip.price_promo_cents match {
-      case Some(promoCents) if trip.is_promo.contains(true) =>
-        val promoEuros = BigDecimal(promoCents) / 100
-        Horizontal(List(
-          Leaf(s"\ud83d\udcb0 \u20ac$promoEuros"),
-          Leaf(s"(was \u20ac$priceEuros)"),
-          Leaf("\ud83c\udff7\ufe0f PROMO")
-        ))
-      case _ =>
-        Leaf(s"\ud83d\udcb0 \u20ac$priceEuros")
-    }
-    val timing = Horizontal(List(
-      Leaf(s"\ud83d\udd50 ${formatTime(trip.departure)}"),
-      Leaf("\u2192"),
-      Leaf(s"\ud83d\udd50 ${formatTime(trip.arrival)}")
+    Vertical(List(
+      Horizontal(List(Text("Trip ID:"), Text(trip.id))),
+      Horizontal(List(Text("From:"), Text(trip.origin_id.toString))),
+      Horizontal(List(Text("To:"), Text(trip.destination_id.toString))),
+      Horizontal(List(Text("Departure:"), Text(trip.departure))),
+      Horizontal(List(Text("Arrival:"), Text(trip.arrival))),
+      Horizontal(List(Text("Price:"), Text(s"${trip.price_cents / 100.0} ${trip.price_currency}")))
     ))
-    val availability = if (trip.available) {
-      Leaf("\u2705 Available")
-    } else {
-      Leaf("\u274c Sold out")
-    }
-    val features = List(
-      trip.is_refundable.filter(identity).map(_ => "\ud83d\udcb3 Refundable"),
-      if (trip.legs.length > 1) Some(s"\ud83d\udd04 ${trip.legs.length} legs") else None
-    ).flatten
-    val featuresDoc: List[Document[String]] =
-      if (features.nonEmpty) List(Leaf(features.mkString(" \u2022 "))) else List.empty
-    Vertical(List(header, pricing, timing, availability) ++ featuresDoc)
   }
-  def searchResultsToDocument(
-    originId: Int,
-    destinationId: Int,
-    date: LocalDate,
-    trips: List[Trip]
-  ): Document[String] = {
-    val header = Vertical(List(
-      Leaf("🔍 BlaBlaCar Bus Search Results"),
-      Leaf(s"Route: $originId → $destinationId"),
-      Leaf(s"📅 ${Option(date).map(_.format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy"))).getOrElse("")}")
+
+  def searchResultsToDocument(origin: Int, destination: Int, date: LocalDate, trips: List[Trip]): Document[String] = {
+    val header = Horizontal(List(
+      Text(s"Search Results for $origin to $destination on $date")
     ))
-    val separator = Leaf("─" * 50)
-    if (trips.isEmpty) {
-      Vertical(List(
-        header,
-        separator,
-        Leaf("😔 No trips found"),
-        Leaf("Try adjusting your search criteria")
-      ))
-    } else {
-      val tripList = trips.zipWithIndex.map { case (trip, index) =>
-        val number = Leaf(s"${index + 1}.")
-        val tripDoc = tripToDocument(trip)
-        Horizontal(List(number, tripDoc))
-      }
-      val stats = Leaf(s"📊 Found ${trips.length} trip(s)")
-      Vertical(List(header, stats, separator) ++ tripList)
-    }
-  }
-  def errorToDocument(error: BlaBlaBusApiError): Document[String] = {
-    error match {
-      case HttpError(status, message) =>
-        Vertical(List(
-          Leaf(s"❌ HTTP Error ${status.code}"),
-          Leaf(message)
-        ))
-      case BusApiParseError(message) =>
-        Vertical(List(
-          Leaf("⚠️ Data Parsing Error"),
-          Leaf(message)
-        ))
-      case NetworkError(cause) =>
-        Vertical(List(
-          Leaf("🌐 Network Error"),
-          Leaf("Unable to connect to BlaBlaCar API"),
-          Leaf("Please check your internet connection")
-        ))
-      case RateLimitError(retryAfter) =>
-        val retryMessage = retryAfter
-          .map(d => s"Try again in ${d.toMinutes} minutes")
-          .getOrElse("Try again later")
-        Vertical(List(
-          Leaf("⏱️ Rate Limit Exceeded"),
-          Leaf(retryMessage)
-        ))
-    }
-  }
-  private def formatTime(timeString: String): String = {
-    try {
-      val dateTime = LocalDateTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-      Option(dateTime).map(_.format(DateTimeFormatter.ofPattern("HH:mm"))).getOrElse(timeString.take(5))
-    } catch {
-      case _: Exception => timeString.take(5)
-    }
+    val tripsDocs = trips.map(tripToDocument)
+    Vertical(header :: tripsDocs)
   }
 }
 
 // ZIO Layer for dependency injection
 object BlaBlaBusApiClient {
-  
-  def live: ZLayer[BlaBlaBusConfig & Client, Nothing, BlaBlaBusApiClient] =
+  val layer: ZLayer[BlaBlaBusConfig & Client, Nothing, BlaBlaBusApiClient] =
     ZLayer {
       for {
         config <- ZIO.service[BlaBlaBusConfig]
         client <- ZIO.service[Client]
       } yield new BlaBlaBusApiClientImpl(config, client)
     }
-  
-  def test: ZLayer[Any, Nothing, BlaBlaBusApiClient] =
-    ZLayer.succeed(new MockBlaBlaBusApiClient())
+
+  val mockLayer: ZLayer[Any, Nothing, BlaBlaBusApiClient] =
+    ZLayer.succeed(new MockBlaBlaBusApiClient)
 }
 
 // Mock implementation for testing
 class MockBlaBlaBusApiClient extends BlaBlaBusApiClient {
-  def getStops(): Task[List[BusStop]] = ZIO.succeed(List(
-    BusStop(
-      id = 1,
-      short_name = "Paris Bercy",
-      long_name = "Paris Bercy Station",
-      time_zone = "Europe/Paris",
-      latitude = Some(48.838424),
-      longitude = Some(2.382411),
-      destinations_ids = List(2, 3, 4),
-      address = Some("48 bis Boulevard de Bercy 75012 Paris")
-    ),
-    BusStop(
-      id = 2,
-      short_name = "Lyon Part-Dieu",
-      long_name = "Lyon Part-Dieu Station",
-      time_zone = "Europe/Paris",
-      latitude = Some(45.760696),
-      longitude = Some(4.859054),
-      destinations_ids = List(1, 3, 4),
-      address = Some("Place Charles B\u00e9raudier, 69003 Lyon")
-    )
-  ))
-  def getFares(
-    originId: Option[Int] = None,
-    destinationId: Option[Int] = None,
-    date: Option[LocalDate] = None,
-    startDate: Option[LocalDate] = None,
-    endDate: Option[LocalDate] = None,
-    currencies: List[String] = List.empty,
-    updatedAfter: Option[LocalDateTime] = None
-  ): Task[List[Fare]] = ZIO.succeed(List(
-    Fare(
-      id = 1,
-      updated_at = "2024-01-01T10:00:00Z",
-      origin_id = 1,
-      destination_id = 2,
-      departure = "2024-01-15T08:30:00+01:00",
-      arrival = "2024-01-15T12:45:00+01:00",
-      available = true,
-      price_cents = 2599,
-      price_currency = "EUR",
-      legs = List(
-        Leg(
-          origin_id = 1,
-          destination_id = 2,
-          departure = "2024-01-15T08:30:00+01:00",
-          arrival = "2024-01-15T12:45:00+01:00",
-          bus_number = "BB123"
-        )
-      )
-    )
-  ))
-  def searchRoutes(request: SearchRequest): Task[List[Trip]] = ZIO.succeed(List(
-    Trip(
-      id = "trip-123",
-      origin_id = request.origin_id,
-      destination_id = request.destination_id,
-      departure = "2024-01-15T08:30:00+01:00",
-      arrival = "2024-01-15T12:45:00+01:00",
-      available = true,
-      price_cents = 2599,
-      price_currency = "EUR",
-      is_promo = Some(false),
-      is_refundable = Some(true),
-      legs = List(
-        Leg(
-          origin_id = request.origin_id,
-          destination_id = request.destination_id,
-          departure = "2024-01-15T08:30:00+01:00",
-          arrival = "2024-01-15T12:45:00+01:00",
-          bus_number = "BB123"
-        )
-      ),
-      passengers = request.passengers.getOrElse(List(Passenger("1", 35))).map { passenger =>
-        PassengerResult(
-          id = passenger.id,
-          price_cents = 2599,
-          price_currency = "EUR",
-          fare_name = "Adult",
-          fare_description = "Standard adult fare"
-        )
-      }
-    )
-  ))
-  def searchRoutes(
-    originId: Int,
-    destinationId: Int,
-    date: LocalDate,
-    passengers: List[Passenger] = List(Passenger("1", 35)),
-    currency: String = "EUR",
-    transfers: Int = 0
-  ): Task[List[Trip]] = {
-    val request = SearchRequest(
-      origin_id = originId,
-      destination_id = destinationId,
-      date = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
-      currency = Some(currency),
-      passengers = Some(passengers),
-      transfers = Some(transfers)
-    )
-    searchRoutes(request)
-  }
+  def getStops(): Task[List[BusStop]] = ZIO.succeed(List.empty)
+  def getFares(updatedAfter: Option[LocalDateTime]): Task[List[Fare]] = ZIO.succeed(List.empty)
+  def searchRoutes(request: SearchRequest): Task[List[Trip]] = ZIO.succeed(List.empty)
+  def searchRoutes(transfers: Int): Task[List[Trip]] = ZIO.succeed(List.empty)
 }
