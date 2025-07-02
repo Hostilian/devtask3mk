@@ -188,7 +188,7 @@ class BlaBlaBusApiClientImpl(
       actualResponse = response match {
         case r: zio.http.Response => r
         case Some(r: zio.http.Response) => r
-        case _ => return ZIO.fail(BusApiParseError("Invalid response type"))
+        case _ => throw BusApiParseError("Invalid response type")
       }
       body <- actualResponse.body.asString.orDie
       stopsResponse <- ZIO.fromEither(body.fromJson[StopsResponse])
@@ -220,7 +220,7 @@ class BlaBlaBusApiClientImpl(
       actualResponse = response match {
         case r: zio.http.Response => r
         case Some(r: zio.http.Response) => r
-        case _ => return ZIO.fail(BusApiParseError("Invalid response type"))
+        case _ => throw BusApiParseError("Invalid response type")
       }
       body <- actualResponse.body.asString.orDie
       faresResponse <- ZIO.fromEither(body.fromJson[FaresResponse])
@@ -245,7 +245,7 @@ class BlaBlaBusApiClientImpl(
       actualResponse = response match {
         case r: zio.http.Response => r
         case Some(r: zio.http.Response) => r
-        case _ => return ZIO.fail(BusApiParseError("Invalid response type"))
+        case _ => throw BusApiParseError("Invalid response type")
       }
       body <- actualResponse.body.asString.orDie
       tripsResponse <- ZIO.fromEither(body.fromJson[TripsResponse])
@@ -264,7 +264,7 @@ class BlaBlaBusApiClientImpl(
     val request = SearchRequest(
       origin_id = originId,
       destination_id = destinationId,
-      date = Option(date).map(_.nn.format(DateTimeFormatter.ISO_LOCAL_DATE)).getOrElse("").nn,
+      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE)).getOrElse("").nn,
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
@@ -368,9 +368,10 @@ object BlaBlaBusDocumentProcessor {
       trip.is_refundable.filter(identity).map(_ => "💳 Refundable"),
       if (trip.legs.length > 1) Some(s"🔄 ${trip.legs.length} legs") else None
     ).flatten
+    // Fix type for featuresDoc and ensure List[Document[String]]
     val featuresDoc: List[Document[String]] =
       if (features.nonEmpty) List(Leaf(features.mkString(" \u2022 "))) else List.empty
-    Vertical(List(header, pricing, timing, availability).asInstanceOf[List[Document[String]]] ++ featuresDoc)
+    Vertical(List(header, pricing, timing, availability) ++ featuresDoc)
   }
   def searchResultsToDocument(
     originId: Int,

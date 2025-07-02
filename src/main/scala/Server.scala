@@ -29,10 +29,7 @@ import org.http4s.ParseFailure
 // Implicit decoder for LocalDate query params
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
-    val safeStr = Option(str).getOrElse("").nn
-    if (safeStr.nonEmpty)
-      Try(LocalDate.parse(safeStr)).toEither.left.map(t => ParseFailure("Invalid date", t.getMessage))
-    else Left(ParseFailure("Invalid date", "Empty string"))
+    Try(LocalDate.parse(Option(str).getOrElse("").nn)).toEither.left.map(t => ParseFailure("Invalid date", t.getMessage.nn))
   }
 object DateParam extends org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
@@ -56,14 +53,14 @@ object Server {
         bodyStr <- req.as[String]
         searchReq = bodyStr.fromJson[SearchRequest]
         result <- searchReq match {
-          case Right(reqObj: SearchRequest) =>
+          case Right(request: SearchRequest) =>
             val mockTrips = List(
               Trip(
                 id = "demo-trip-1",
-                origin_id = reqObj.origin_id,
-                destination_id = reqObj.destination_id,
-                departure = s"${reqObj.date}T08:30:00+01:00",
-                arrival = s"${reqObj.date}T12:45:00+01:00",
+                origin_id = request.origin_id,
+                destination_id = request.destination_id,
+                departure = s"${request.date}T08:30:00+01:00",
+                arrival = s"${request.date}T12:45:00+01:00",
                 available = true,
                 price_cents = 2599,
                 price_currency = "EUR",
@@ -72,9 +69,9 @@ object Server {
               )
             )
             val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
-              reqObj.origin_id,
-              reqObj.destination_id,
-              LocalDate.parse(Option(reqObj.date).getOrElse("").nn).nn,
+              request.origin_id,
+              request.destination_id,
+              LocalDate.parse(request.date.nn),
               mockTrips
             )
             Ok(Cli.prettyPrint(doc))
@@ -89,22 +86,7 @@ object Server {
         BusStop(
           id = 1,
           short_name = "Paris Bercy",
-          long_name = "Paris Bercy Station",
-          time_zone = "Europe/Paris",
-          latitude = Some(48.838424),
-          longitude = Some(2.382411),
-          destinations_ids = List(2, 3),
           address = Some("48 bis Boulevard de Bercy 75012 Paris")
-        ),
-        BusStop(
-          id = 2,
-          short_name = "Lyon Part-Dieu",
-          long_name = "Lyon Part-Dieu Station",
-          time_zone = "Europe/Paris",
-          latitude = Some(45.760696),
-          longitude = Some(4.859054),
-          destinations_ids = List(1, 3),
-          address = Some("Place Charles Béraudier, 69003 Lyon")
         )
       )
       val stopsDoc = Vertical(mockStops.map(BlaBlaBusDocumentProcessor.stopToDocument))
@@ -130,11 +112,10 @@ object Server {
       Ok(Cli.prettyPrint(tripDoc))
 
     // Quick search with query parameters
-    case GET -> Root / "api" / "bus" / "quick-search" :? 
+    case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
       val tomorrow = LocalDate.now().nn.plusDays(1)
       val searchDate = date.getOrElse(tomorrow).nn
-      
       val mockTrips = List(
         Trip(
           id = s"quick-${origin}-${destination}",
@@ -149,7 +130,6 @@ object Server {
           passengers = List.empty
         )
       )
-      
       val resultsDoc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
         origin, destination, searchDate, mockTrips
       )
