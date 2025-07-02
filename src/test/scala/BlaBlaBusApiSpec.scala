@@ -172,7 +172,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         )
 
         val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
-          1, 2, LocalDate.of(2024, 1, 15), trips
+          1, 2, LocalDate.of(2024, 1, 15).nn, trips
         )
         val content = doc.prettyPrint
 
@@ -221,7 +221,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
             date = tomorrow.toString,
             passengers = Some(List(Passenger("1", 30)))
           ))
-          doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(1, 2, tomorrow, trips)
+          doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(1, 2, tomorrow.nn, trips)
         } yield {
           assertTrue(trips.nonEmpty) &&
           assertTrue(doc.prettyPrint.contains("Search Results"))
