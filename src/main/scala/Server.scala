@@ -13,7 +13,6 @@ import zio.Runtime
 import zio.Task
 import zio.Unsafe
 import zio.interop.catz.*
-import zio.interop.catz.implicits.*
 
 object Server {
   val dsl = Http4sDsl[Task]
@@ -38,7 +37,7 @@ object Server {
 
   def runServer: Task[Unit] =
     EmberServerBuilder
-      .forAsync[Task]
+      .default[Task] // Note: Deprecation warning - but still functional
       .withHttpApp(routes.orNotFound)
       .withHost(Host.fromString("localhost").get)
       .withPort(Port.fromInt(8081).get)
