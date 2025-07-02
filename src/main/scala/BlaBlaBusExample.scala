@@ -17,7 +17,7 @@ import com.example._
 object BlaBlaBusExample extends ZIOAppDefault {
   
   def run: ZIO[ZIOAppArgs, Any, Any] = {
-    val program = for {
+    val program: ZIO[Any, IOException, Unit] = for {
       _ <- printLine("🚌 BlaBlaCar Bus API Integration Demo")
       _ <- printLine("=" * 50)
       _ <- printLine("")
