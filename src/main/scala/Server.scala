@@ -72,12 +72,12 @@ object Server {
             val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
               request.origin_id,
               request.destination_id,
-              LocalDate.parse(request.date.nn).nn,
+              LocalDate.parse(request.date),
               mockTrips
             )
             Ok(Cli.prettyPrint(doc))
-          case _ =>
-            BadRequest(s"Invalid search request: $searchReq")
+          case Left(error) =>
+            BadRequest(s"Invalid search request: $error")
         }
       } yield result
 
@@ -92,20 +92,7 @@ object Server {
           latitude = Some(48.838424),
           longitude = Some(2.382411),
           destinations_ids = List(2, 3),
-          address = Some("48 bis Boulevard de Bercy 75012 Paris"),
-          short_name_de = None,
-          short_name_en = None,
-          short_name_fr = None,
-          short_name_it = None,
-          short_name_nl = None,
-          long_name_de = None,
-          long_name_en = None,
-          long_name_fr = None,
-          long_name_it = None,
-          long_name_nl = None,
-          is_meta_gare = None,
-          stops = None,
-          _carrier_id = None
+          address = Some("48 bis Boulevard de Bercy 75012 Paris")
         ),
         BusStop(
           id = 2,
@@ -115,20 +102,7 @@ object Server {
           latitude = Some(45.760696),
           longitude = Some(4.859054),
           destinations_ids = List(1, 3),
-          address = Some("Place Charles Béraudier, 69003 Lyon"),
-          short_name_de = None,
-          short_name_en = None,
-          short_name_fr = None,
-          short_name_it = None,
-          short_name_nl = None,
-          long_name_de = None,
-          long_name_en = None,
-          long_name_fr = None,
-          long_name_it = None,
-          long_name_nl = None,
-          is_meta_gare = None,
-          stops = None,
-          _carrier_id = None
+          address = Some("Place Charles Béraudier, 69003 Lyon")
         )
       )
       val stopsDoc = Vertical(mockStops.map(BlaBlaBusDocumentProcessor.stopToDocument))
@@ -157,7 +131,7 @@ object Server {
     case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
       val tomorrow = LocalDate.now().nn.plusDays(1)
-      val searchDate = date.getOrElse(LocalDate.now().nn.plusDays(1)).nn
+      val searchDate = date.getOrElse(LocalDate.now().plusDays(1))
       val mockTrips = List(
         Trip(
           id = s"quick-${origin}-${destination}",

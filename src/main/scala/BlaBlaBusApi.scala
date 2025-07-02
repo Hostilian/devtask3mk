@@ -281,7 +281,7 @@ object BlaBlaBusDocumentProcessor {
 // ZIO Layer for dependency injection
 object BlaBlaBusApiClient {
   val layer: ZLayer[BlaBlaBusConfig & Client, Nothing, BlaBlaBusApiClient] =
-    ZLayer {
+    ZLayer.fromZIO {
       for {
         config <- ZIO.service[BlaBlaBusConfig]
         client <- ZIO.service[Client]
