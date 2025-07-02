@@ -55,27 +55,32 @@ object Server {
         searchReq = bodyStr.fromJson[SearchRequest]
         result <- searchReq match {
           case Right(request) =>
-            val mockTrips = List(
-              Trip(
-                id = "demo-trip-1",
-                origin_id = request.origin_id,
-                destination_id = request.destination_id,
-                departure = s"${request.date}T08:30:00+01:00",
-                arrival = s"${request.date}T12:45:00+01:00",
-                available = true,
-                price_cents = 2599,
-                price_currency = "EUR",
-                legs = List.empty,
-                passengers = List.empty
-              )
-            )
-            val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
-              request.origin_id,
-              request.destination_id,
-              LocalDate.parse(request.date).nn,
-              mockTrips
-            )
-            Ok(Cli.prettyPrint(doc))
+            Try(LocalDate.parse(request.date)) match {
+              case scala.util.Success(parsedDate) =>
+                val mockTrips = List(
+                  Trip(
+                    id = "demo-trip-1",
+                    origin_id = request.origin_id,
+                    destination_id = request.destination_id,
+                    departure = s"${parsedDate}T08:30:00+01:00",
+                    arrival = s"${parsedDate}T12:45:00+01:00",
+                    available = true,
+                    price_cents = 2599,
+                    price_currency = "EUR",
+                    legs = List.empty,
+                    passengers = List.empty
+                  )
+                )
+                val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
+                  request.origin_id,
+                  request.destination_id,
+                  parsedDate,
+                  mockTrips
+                )
+                Ok(Cli.prettyPrint(doc))
+              case scala.util.Failure(_) =>
+                BadRequest(s"Invalid date format: ${request.date}")
+            }
           case Left(error) =>
             BadRequest(s"Invalid search request: $error")
         }
@@ -130,26 +135,29 @@ object Server {
     // Quick search with query parameters
     case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
-      val tomorrow = LocalDate.now().nn.plusDays(1)
-      val searchDate = date.getOrElse(LocalDate.now().nn.plusDays(1)).nn
-      val mockTrips = List(
-        Trip(
-          id = s"quick-${origin}-${destination}",
-          origin_id = origin,
-          destination_id = destination,
-          departure = s"${searchDate}T08:30:00+01:00",
-          arrival = s"${searchDate}T12:45:00+01:00",
-          available = true,
-          price_cents = 2599,
-          price_currency = "EUR",
-          legs = List.empty,
-          passengers = List.empty
+      val searchDate = date.getOrElse(LocalDate.now().plusDays(1))
+      if (searchDate == null) {
+        BadRequest("Invalid date provided")
+      } else {
+        val mockTrips = List(
+          Trip(
+            id = s"quick-${origin}-${destination}",
+            origin_id = origin,
+            destination_id = destination,
+            departure = s"${searchDate}T08:30:00+01:00",
+            arrival = s"${searchDate}T12:45:00+01:00",
+            available = true,
+            price_cents = 2599,
+            price_currency = "EUR",
+            legs = List.empty,
+            passengers = List.empty
+          )
         )
-      )
-      val resultsDoc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
-        origin, destination, searchDate.nn, mockTrips
-      )
-      Ok(Cli.prettyPrint(resultsDoc))
+        val resultsDoc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
+          origin, destination, searchDate, mockTrips
+        )
+        Ok(Cli.prettyPrint(resultsDoc))
+      }
   }
 
   val routes: HttpRoutes[Task] = HttpRoutes.of[Task] {
