@@ -251,6 +251,30 @@ class BlaBlaBusApiClientImpl(
     ZIO.succeed(List.empty)
   }
 
+  // Additional convenience methods for testing
+  def searchRoutes(
+      originId: Int,
+      destinationId: Int,
+      date: LocalDate,
+      passengers: List[Passenger]
+  ): Task[List[Trip]] = {
+    searchRoutes(SearchRequest(
+      origin_id = originId,
+      destination_id = destinationId,
+      date = date.toString,
+      passengers = Some(passengers)
+    ))
+  }
+
+  def getFares(
+      originId: Option[Int] = None,
+      destinationId: Option[Int] = None,
+      date: Option[LocalDate] = None,
+      currencies: List[String] = List.empty
+  ): Task[List[Fare]] = {
+    getFares()
+  }
+
   private def buildFareQueryParams(
       updatedAfter: Option[LocalDateTime]
   ): String = {
