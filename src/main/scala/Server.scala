@@ -150,6 +150,18 @@ object Server {
         origin, destination, searchDate, mockTrips
       )
       Ok(Cli.prettyPrint(resultsDoc))
+
+    // New API version search route
+    case Method.GET -> !! / "api" / "v1" / "search" :? from(from) +& to(to) +& date(dateStr) =>
+      val date = LocalDate.parse(dateStr.nn)
+      val searchRequest = SearchRequest(
+        from = from.nn,
+        to = to.nn,
+        date = date
+      )
+      blaBlaBusApi.searchRoutes(searchRequest).map(trips => Response.json(trips.toJson)).catchAll {
+        case _: Throwable => InternalServerError("Error processing request")
+      }
   }
 
   val routes: HttpRoutes[Task] = HttpRoutes.of[Task] {

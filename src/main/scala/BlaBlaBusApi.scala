@@ -165,31 +165,29 @@ class BlaBlaBusApiClientImpl(
     Header.Accept(MediaType.application.json)
   )
 
-  private def makeRequest[T: JsonDecoder](request: Request): Task[T] =
-    ZIO.scoped {
-      client
-        .request(request)
-        .timeout(config.timeout)
-        .someOrFail(HttpError(Status.RequestTimeout, "Request timed out"))
-        .retry(Schedule.recurs(config.retries))
-        .mapError {
-          case e: BlaBlaBusApiError => e
-          case e: Throwable       => NetworkError(e)
-        }
-        .flatMap { response =>
-          if (response.status.isSuccess) {
-            response.body.asString.mapError(NetworkError).flatMap { body =>
-              ZIO
-                .fromEither(body.fromJson[T])
-                .mapError(e => BusApiParseError(s"Failed to parse response: $e. Body: $body"))
-            }
-          } else {
-            response.body.asString.mapError(NetworkError).flatMap(body =>
-              ZIO.fail(HttpError(response.status, s"Request failed with status ${response.status}. Body: $body"))
-            )
+  private def makeRequest[T: JsonDecoder](request: Request): ZIO[Scope, BlaBlaBusApiError, T] =
+    client
+      .request(request)
+      .timeout(config.timeout)
+      .someOrFail(HttpError(Status.RequestTimeout, "Request timed out"))
+      .retry(Schedule.recurs(config.retries))
+      .mapError {
+        case e: BlaBlaBusApiError => e
+        case e: Throwable       => NetworkError(e)
+      }
+      .flatMap { response =>
+        if (response.status.isSuccess) {
+          response.body.asString.mapError(NetworkError.apply).flatMap { body =>
+            ZIO
+              .fromEither(body.fromJson[T])
+              .mapError(e => BusApiParseError(s"Failed to parse response: $e. Body: $body"))
           }
+        } else {
+          response.body.asString.mapError(NetworkError.apply).flatMap(body =>
+            ZIO.fail(HttpError(response.status, s"Request failed with status ${response.status}. Body: $body"))
+          )
         }
-    }
+      }
 
   def getStops(): Task[List[BusStop]] = {
     val url = s"${config.baseUrl}/${config.version}/stops"
@@ -198,7 +196,7 @@ class BlaBlaBusApiClientImpl(
       request = Request.get(decodedUrl).addHeaders(baseHeaders)
       stopsResponse <- makeRequest[StopsResponse](request)
     } yield stopsResponse.stops
-    effect.provide(ZLayer.succeed(client) >>> Client.live.orDie)
+    effect.provide(ZLayer.succeed(client) ++ ZLayer.succeed(Scope.global))
   }
 
   def getFares(
@@ -211,7 +209,7 @@ class BlaBlaBusApiClientImpl(
       request = Request.get(decodedUrl).addHeaders(baseHeaders)
       faresResponse <- makeRequest[FaresResponse](request)
     } yield faresResponse.fares
-    effect.provide(ZLayer.succeed(client) >>> Client.live.orDie)
+    effect.provide(ZLayer.succeed(client) ++ ZLayer.succeed(Scope.global))
   }
 
   def searchRoutes(request: SearchRequest): Task[List[Trip]] = {
@@ -225,7 +223,7 @@ class BlaBlaBusApiClientImpl(
         .addHeader(Header.ContentType(MediaType.application.json))
       tripsResponse <- makeRequest[TripsResponse](httpRequest)
     } yield tripsResponse.trips
-    effect.provide(ZLayer.succeed(client) >>> Client.live.orDie)
+    effect.provide(ZLayer.succeed(client) ++ ZLayer.succeed(Scope.global))
   }
 
   def searchRoutes(
