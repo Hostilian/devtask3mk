@@ -12,6 +12,8 @@ lazy val root = project
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % "2.1.11",
       "dev.zio" %% "zio-interop-cats" % "23.1.0.2",
+      "dev.zio" %% "zio-json" % "0.7.3",
+      "dev.zio" %% "zio-http" % "3.0.1",
       "org.typelevel" %% "cats-effect" % "3.5.4",
       "org.typelevel" %% "cats-core" % "2.12.0",
       "org.typelevel" %% "cats-free" % "2.12.0",
@@ -19,6 +21,7 @@ lazy val root = project
       "io.circe" %% "circe-generic" % "0.14.10",
       "io.circe" %% "circe-parser" % "0.14.10",
       "org.http4s" %% "http4s-ember-server" % "0.23.27",
+      "org.http4s" %% "http4s-ember-client" % "0.23.27",
       "org.http4s" %% "http4s-circe" % "0.23.27",
       "org.http4s" %% "http4s-dsl" % "0.23.27",
       "dev.optics" %% "monocle-core" % "3.3.0",
