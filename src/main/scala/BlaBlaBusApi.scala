@@ -199,26 +199,24 @@ class BlaBlaBusApiClientImpl(
     endDate: Option[LocalDate] = None,
     currencies: List[String] = List.empty,
     updatedAfter: Option[LocalDateTime] = None
-  ): Task[List[Fare]] =
-    ZIO.scoped {
-      for {
-        response <- client
-          .request(
-            Request.get(url + queryParams).addHeaders(baseHeaders)
-          )
-          .timeout(config.timeout)
-          .retry(Schedule.recurs(config.retries))
-          .catchAll(handleNetworkError)
-        actualResponse = response match {
-          case r: zio.http.Response => r
-          case Some(r: zio.http.Response) => r
-          case _ => throw BusApiParseError("Invalid response type")
-        }
-        body <- actualResponse.body.asString.orDie
-        faresResponse <- ZIO.fromEither(body.fromJson[FaresResponse])
-          .mapError(BusApiParseError.apply)
-      } yield faresResponse.fares
-    }.orDie
+  ): Task[List[Fare]] = {
+    val queryParams = buildFareQueryParams(
+      originId, destinationId, date, startDate, endDate, currencies, updatedAfter
+    )
+    val url = s"${config.baseUrl}/${config.version}/fares"
+    for {
+      response <- client
+        .request(
+          Request.get(url + queryParams).addHeaders(baseHeaders)
+        )
+        .timeout(config.timeout)
+        .retry(Schedule.recurs(config.retries))
+        .catchAll(handleNetworkError)
+      body <- response.body.asString.orDie
+      faresResponse <- ZIO.fromEither(body.fromJson[FaresResponse])
+        .mapError(BusApiParseError.apply)
+    } yield faresResponse.fares
+  }
 
   def searchRoutes(request: SearchRequest): Task[List[Trip]] =
     ZIO.scoped {
