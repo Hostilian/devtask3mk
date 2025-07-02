@@ -1,0 +1,63 @@
+name: Update Wiki
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'wiki/**'
+      - 'docs/**'
+      - 'README.md'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-wiki:
+    name: Update GitHub Wiki
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'Hostilian'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Checkout wiki
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository }}.wiki
+          path: wiki-repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update wiki pages
+        run: |
+          # Copy wiki files if they exist
+          if [ -d "wiki" ]; then
+            echo "Copying wiki files..."
+            cp -r wiki/* wiki-repo/ 2>/dev/null || echo "No wiki files to copy"
+          fi
+          
+          # Copy additional documentation
+          if [ -f "README.md" ]; then
+            echo "Copying README as wiki home..."
+            cp README.md wiki-repo/Home.md 2>/dev/null || echo "Failed to copy README"
+          fi
+
+      - name: Commit and push wiki changes
+        run: |
+          cd wiki-repo
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          # Check if there are changes
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Changes detected, updating wiki..."
+            git add .
+            git commit -m "Auto-update wiki from main branch [skip ci]"
+            git push
+            echo "Wiki updated successfully!"
+          else
+            echo "No changes to wiki files"
+          fi
