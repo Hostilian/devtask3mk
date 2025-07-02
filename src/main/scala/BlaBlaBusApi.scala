@@ -161,8 +161,8 @@ class BlaBlaBusApiClientImpl(
   import BlaBlaBusCodecs.given
 
   private val baseHeaders = Headers(
-    "Authorization" -> s"Token token=${config.apiKey}",
-    "Accept" -> "application/json"
+    Header("Authorization", s"Token token=${config.apiKey}"),
+    Header("Accept", "application/json")
   )
 
   private def makeRequest[T: JsonDecoder](request: Request): Task[T] =
@@ -173,7 +173,7 @@ class BlaBlaBusApiClientImpl(
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
         .flatMap { response =>
-          response.body.asString.flatMap { body =>
+          response.body.asString.orDie.flatMap { body =>
             ZIO.fromEither(body.fromJson[T])
               .mapError(BusApiParseError.apply)
           }
