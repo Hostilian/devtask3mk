@@ -14,10 +14,10 @@ import io.circe.syntax.*
 // Data type for documents split horizontally or vertically
 sealed trait Document[A]
 
-case class Leaf[A](value: A) extends Document[A]
+case class Leaf[A](value: A)                       extends Document[A]
 case class Horizontal[A](cells: List[Document[A]]) extends Document[A]
-case class Vertical[A](cells: List[Document[A]]) extends Document[A]
-case class Empty[A]() extends Document[A]
+case class Vertical[A](cells: List[Document[A]])   extends Document[A]
+case class Empty[A]()                              extends Document[A]
 
 // Some error types for validation
 sealed trait DocumentError
@@ -111,10 +111,6 @@ object Document {
       case (d, Empty())                     => d
       case (Horizontal(c1), Horizontal(c2)) => Horizontal(c1 ++ c2)
       case (Vertical(c1), Vertical(c2))     => Vertical(c1 ++ c2)
-      case (Horizontal(c1), d2)             => Horizontal(c1 :+ d2)
-      case (d1, Horizontal(c2))             => Horizontal(d1 +: c2)
-      case (Vertical(c1), d2)               => Vertical(c1 :+ d2)
-      case (d1, Vertical(c2))               => Vertical(d1 +: c2)
       case (d1, d2)                         => Vertical(List(d1, d2))
     }
   }
