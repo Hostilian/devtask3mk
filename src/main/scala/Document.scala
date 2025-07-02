@@ -15,16 +15,36 @@ import io.circe.syntax.*
 sealed trait Document[A]
 
 case class Leaf[A](value: A) extends Document[A] {
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Leaf[_]]
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Leaf[?]]
+  override def equals(obj: Any): Boolean = obj match {
+    case that: Leaf[?] => this.value == that.value
+    case _ => false
+  }
+  override def hashCode(): Int = value.hashCode()
 }
 case class Horizontal[A](cells: List[Document[A]]) extends Document[A] {
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Horizontal[_]]
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Horizontal[?]]
+  override def equals(obj: Any): Boolean = obj match {
+    case that: Horizontal[?] => this.cells == that.cells
+    case _ => false
+  }
+  override def hashCode(): Int = cells.hashCode()
 }
 case class Vertical[A](cells: List[Document[A]]) extends Document[A] {
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Vertical[_]]
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Vertical[?]]
+  override def equals(obj: Any): Boolean = obj match {
+    case that: Vertical[?] => this.cells == that.cells
+    case _ => false
+  }
+  override def hashCode(): Int = cells.hashCode()
 }
 case class Empty[A]() extends Document[A] {
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Empty[_]]
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Empty[?]]
+  override def equals(obj: Any): Boolean = obj match {
+    case _: Empty[?] => true
+    case _ => false
+  }
+  override def hashCode(): Int = 0
 }
 
 // Some error types for validation
