@@ -161,8 +161,8 @@ class BlaBlaBusApiClientImpl(
   import BlaBlaBusCodecs.given
 
   private val baseHeaders = Headers(
-    Header.Authorization.parse(s"Token token=${config.apiKey}").getOrElse(Header.Authorization.Bearer("")),
-    Header.Accept.parse("application/json").getOrElse(Header.Accept(MediaType.application.json))
+    Header.Custom("Authorization", s"Token token=${config.apiKey}"),
+    Header.Accept(MediaType.application.json)
   )
 
   private def makeRequest[T: JsonDecoder](request: Request): Task[T] =
@@ -170,12 +170,21 @@ class BlaBlaBusApiClientImpl(
       client
         .request(request)
         .timeout(config.timeout)
+        .someOrFail(HttpError(Status.RequestTimeout, "Request timed out"))
         .retry(Schedule.recurs(config.retries))
-        .catchAll(handleNetworkError)
+        .mapError {
+          case e: BlaBlaBusApiError => e
+          case e: Throwable       => NetworkError(e)
+        }
         .flatMap { response =>
-          response.body.asString.flatMap { body =>
-            ZIO.fromEither(body.fromJson[T])
-              .mapError(BusApiParseError.apply)
+          if (response.status.isSuccess) {
+            response.body.asString.flatMap { body =>
+              ZIO
+                .fromEither(body.fromJson[T])
+                .mapError(e => BusApiParseError(s"Failed to parse response: $e. Body: $body"))
+            }
+          } else {
+            ZIO.fail(HttpError(response.status, s"Request failed with status ${response.status}"))
           }
         }
     }
@@ -226,14 +235,6 @@ class BlaBlaBusApiClientImpl(
     updatedAfter.map { dt =>
       s"?updated_after=${dt.format(DateTimeFormatter.ISO_DATE_TIME)}"
     }.getOrElse("")
-  }
-
-  private def handleNetworkError(error: Throwable): Task[Response] = {
-    error match {
-      case e: java.net.SocketTimeoutException => ZIO.fail(NetworkError(e))
-      case e: java.io.IOException => ZIO.fail(NetworkError(e))
-      case _ => ZIO.fail(error)
-    }
   }
 }
 
