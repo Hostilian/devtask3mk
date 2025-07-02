@@ -26,15 +26,9 @@ import scala.util.Try
 // Implicit decoder for LocalDate query params
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
-    // Ensure str is not null
-    Option(str) match {
-      case Some(nonNullStr) =>
-        Try(LocalDate.parse(nonNullStr)).toEither.left.map(t =>
-          ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error"))
-        )
-      case None =>
-        Left(ParseFailure("Invalid date", "Date string is null"))
-    }
+    val safeStr = Option(str).getOrElse("")
+    if (safeStr.trim.isEmpty) Left(ParseFailure("Missing date", "Date parameter is empty"))
+    else Try(LocalDate.parse(safeStr)).toEither.left.map(t => ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error")))
   }
 object DateParam extends org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
@@ -61,7 +55,7 @@ object Server {
           case Right(request) =>
             Try(LocalDate.parse(request.date)) match {
               case scala.util.Success(parsedDate) =>
-                val safeDate = Option(parsedDate).getOrElse(LocalDate.now()).nn
+                val safeDate = Option(parsedDate).getOrElse(LocalDate.now())
                 val mockTrips = List(
                   Trip(
                     id = "demo-trip-1",
@@ -140,7 +134,7 @@ object Server {
     // Quick search with query parameters
     case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
-      val searchDate = date.map(_.nn).getOrElse(LocalDate.now().plusDays(1))
+      val searchDate = date.getOrElse(LocalDate.now().plusDays(1))
       val mockTrips = List(
         Trip(
           id = s"quick-${origin}-${destination}",
