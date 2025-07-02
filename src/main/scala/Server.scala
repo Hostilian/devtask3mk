@@ -22,16 +22,12 @@ import java.time.format.DateTimeFormatter
 import zio.json._
 import zio.json.DecoderOps
 import scala.util.Try
-import java.time.LocalDate
-import org.http4s.QueryParamDecoder
-import org.http4s.ParseFailure
 
 // Implicit decoder for LocalDate query params
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
-    val safeStr = Option(str).getOrElse("")
-    Try(LocalDate.parse(safeStr)).toEither.left.map(t => ParseFailure("Invalid date", t.getMessage.nn)).map(_.nn)
-  }.map(_.nn)
+    Try(LocalDate.parse(str)).toEither.left.map(t => ParseFailure("Invalid date", t.getMessage))
+  }
 object DateParam extends org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
 // Query parameter extractors (move outside Server object to avoid cyclic reference)
@@ -136,28 +132,24 @@ object Server {
     case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
       val searchDate = date.getOrElse(LocalDate.now().plusDays(1))
-      if (searchDate == null) {
-        BadRequest("Invalid date provided")
-      } else {
-        val mockTrips = List(
-          Trip(
-            id = s"quick-${origin}-${destination}",
-            origin_id = origin,
-            destination_id = destination,
-            departure = s"${searchDate}T08:30:00+01:00",
-            arrival = s"${searchDate}T12:45:00+01:00",
-            available = true,
-            price_cents = 2599,
-            price_currency = "EUR",
-            legs = List.empty,
-            passengers = List.empty
-          )
+      val mockTrips = List(
+        Trip(
+          id = s"quick-${origin}-${destination}",
+          origin_id = origin,
+          destination_id = destination,
+          departure = s"${searchDate}T08:30:00+01:00",
+          arrival = s"${searchDate}T12:45:00+01:00",
+          available = true,
+          price_cents = 2599,
+          price_currency = "EUR",
+          legs = List.empty,
+          passengers = List.empty
         )
-        val resultsDoc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
-          origin, destination, searchDate, mockTrips
-        )
-        Ok(Cli.prettyPrint(resultsDoc))
-      }
+      )
+      val resultsDoc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
+        origin, destination, searchDate, mockTrips
+      )
+      Ok(Cli.prettyPrint(resultsDoc))
   }
 
   val routes: HttpRoutes[Task] = HttpRoutes.of[Task] {
