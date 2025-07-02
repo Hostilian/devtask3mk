@@ -177,7 +177,6 @@ class BlaBlaBusApiClientImpl(
   
   def getStops(): Task[List[BusStop]] = {
     val url = s"${config.baseUrl}/${config.version}/stops"
-    
     for {
       response <- client
         .request(
@@ -191,7 +190,7 @@ class BlaBlaBusApiClientImpl(
         .mapError(BusApiParseError.apply)
     } yield stopsResponse.stops
   }
-  
+
   def getFares(
     originId: Option[Int] = None,
     destinationId: Option[Int] = None,
@@ -205,7 +204,6 @@ class BlaBlaBusApiClientImpl(
       originId, destinationId, date, startDate, endDate, currencies, updatedAfter
     )
     val url = s"${config.baseUrl}/${config.version}/fares"
-    
     for {
       response <- client
         .request(
@@ -219,11 +217,10 @@ class BlaBlaBusApiClientImpl(
         .mapError(BusApiParseError.apply)
     } yield faresResponse.fares
   }
-  
+
   def searchRoutes(request: SearchRequest): Task[List[Trip]] = {
     val url = s"${config.baseUrl}/${config.version}/search"
     val requestBody = request.toJson
-    
     for {
       response <- client
         .request(
@@ -240,7 +237,7 @@ class BlaBlaBusApiClientImpl(
         .mapError(BusApiParseError.apply)
     } yield tripsResponse.trips
   }
-  
+
   def searchRoutes(
     originId: Int,
     destinationId: Int,
@@ -252,7 +249,7 @@ class BlaBlaBusApiClientImpl(
     val request = SearchRequest(
       origin_id = originId,
       destination_id = destinationId,
-      date = date.nn.format(DateTimeFormatter.ISO_LOCAL_DATE),
+      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE)).getOrElse(""),
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
@@ -294,25 +291,21 @@ class BlaBlaBusApiClientImpl(
 // Document Processing Integration
 object BlaBlaBusDocumentProcessor {
   import Document._
-  
   def stopToDocument(stop: BusStop): Document[String] = {
     val header = Leaf(s"🚏 ${stop.short_name}")
-    val location = stop.address.map(addr => Leaf(s"📍 $addr")).getOrElse(Empty)
+    val location = stop.address.map(addr => Leaf(s"📍 $addr")).getOrElse(Empty())
     val coordinates = (stop.latitude, stop.longitude) match {
       case (Some(lat), Some(lon)) => Leaf(f"📐 $lat%.6f, $lon%.6f")
-      case _ => Empty
+      case _ => Empty()
     }
     val timezone = Leaf(s"🕐 ${stop.time_zone}")
     val destinations = if (stop.destinations_ids.nonEmpty) {
       Leaf(s"🎯 ${stop.destinations_ids.length} destinations available")
-    } else Empty
-    
-    Vertical(List(header, location, coordinates, timezone, destinations).filter {
-      case Empty() => false
-      case _ => true
+    } else Empty()
+    Vertical(List(header, location, coordinates, timezone, destinations).collect {
+      case d: Document[String] if d != Empty() => d
     })
   }
-  
   def fareToDocument(fare: Fare): Document[String] = {
     val priceEuros = BigDecimal(fare.price_cents) / 100
     val header = Leaf(s"🎫 Fare ${fare.id}")
@@ -327,18 +320,14 @@ object BlaBlaBusDocumentProcessor {
     } else {
       Leaf("❌ Sold out")
     }
-    
     val legs = if (fare.legs.length > 1) {
       List(Leaf(s"🔄 ${fare.legs.length} legs"))
     } else List.empty
-    
     Vertical(List(header, price, timing, availability) ++ legs)
   }
-  
   def tripToDocument(trip: Trip): Document[String] = {
     val priceEuros = BigDecimal(trip.price_cents) / 100
     val header = Leaf(s"🚌 Trip ${trip.id}")
-    
     val pricing = trip.price_promo_cents match {
       case Some(promoCents) if trip.is_promo.contains(true) =>
         val promoEuros = BigDecimal(promoCents) / 100
@@ -350,31 +339,24 @@ object BlaBlaBusDocumentProcessor {
       case _ =>
         Leaf(s"💰 €$priceEuros")
     }
-    
     val timing = Horizontal(List(
       Leaf(s"🕐 ${formatTime(trip.departure)}"),
       Leaf("→"),
       Leaf(s"🕐 ${formatTime(trip.arrival)}")
     ))
-    
     val availability = if (trip.available) {
       Leaf("✅ Available")
     } else {
       Leaf("❌ Sold out")
     }
-    
     val features = List(
       trip.is_refundable.filter(identity).map(_ => "💳 Refundable"),
       if (trip.legs.length > 1) Some(s"🔄 ${trip.legs.length} legs") else None
     ).flatten
-    
-    val featuresDoc = if (features.nonEmpty) {
-      List(Leaf(features.mkString(" • ")))
-    } else List.empty
-    
+    val featuresDoc: List[Document[String]] =
+      if (features.nonEmpty) List(Leaf(features.mkString(" • "))) else List.empty
     Vertical(List(header, pricing, timing, availability) ++ featuresDoc)
   }
-  
   def searchResultsToDocument(
     originId: Int,
     destinationId: Int,
@@ -384,11 +366,9 @@ object BlaBlaBusDocumentProcessor {
     val header = Vertical(List(
       Leaf("🔍 BlaBlaCar Bus Search Results"),
       Leaf(s"Route: $originId → $destinationId"),
-      Leaf(s"📅 ${date.nn.format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy"))}")
+      Leaf(s"📅 ${Option(date).map(_.format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy"))).getOrElse("")}")
     ))
-    
     val separator = Leaf("─" * 50)
-    
     if (trips.isEmpty) {
       Vertical(List(
         header,
@@ -402,13 +382,10 @@ object BlaBlaBusDocumentProcessor {
         val tripDoc = tripToDocument(trip)
         Horizontal(List(number, tripDoc))
       }
-      
       val stats = Leaf(s"📊 Found ${trips.length} trip(s)")
-      
       Vertical(List(header, stats, separator) ++ tripList)
     }
   }
-  
   def errorToDocument(error: BlaBlaBusApiError): Document[String] = {
     error match {
       case HttpError(status, message) =>
@@ -437,13 +414,12 @@ object BlaBlaBusDocumentProcessor {
         ))
     }
   }
-  
   private def formatTime(timeString: String): String = {
     try {
-      val dateTime = LocalDateTime.parse(timeString.nn, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-      dateTime.nn.format(DateTimeFormatter.ofPattern("HH:mm"))
+      val dateTime = LocalDateTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+      dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
     } catch {
-      case _: Exception => timeString.take(5) // Fallback to first 5 chars (HH:mm)
+      case _: Exception => timeString.take(5)
     }
   }
 }
