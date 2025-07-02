@@ -176,12 +176,10 @@ class BlaBlaBusApiClientImpl(
   )
   
   def getStops(): Task[List[BusStop]] = {
-    val url = s"${config.baseUrl}/${config.version}/stops"
+    val requestUrl = s"${config.baseUrl}/${config.version}/stops"
     for {
       response <- client
-        .request(
-          Request.get(url).addHeaders(baseHeaders)
-        )
+        .request(Request.get(requestUrl).addHeaders(baseHeaders))
         .timeout(config.timeout)
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
@@ -203,12 +201,10 @@ class BlaBlaBusApiClientImpl(
     val queryParams = buildFareQueryParams(
       originId, destinationId, date, startDate, endDate, currencies, updatedAfter
     )
-    val url = s"${config.baseUrl}/${config.version}/fares"
+    val requestUrl = s"${config.baseUrl}/${config.version}/fares"
     for {
       response <- client
-        .request(
-          Request.get(url + queryParams).addHeaders(baseHeaders)
-        )
+        .request(Request.get(requestUrl + queryParams).addHeaders(baseHeaders))
         .timeout(config.timeout)
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
@@ -219,13 +215,13 @@ class BlaBlaBusApiClientImpl(
   }
 
   def searchRoutes(request: SearchRequest): Task[List[Trip]] = {
-    val url = s"${config.baseUrl}/${config.version}/search"
+    val requestUrl = s"${config.baseUrl}/${config.version}/search"
     val requestBody = request.toJson
     for {
       response <- client
         .request(
           Request
-            .post(url, Body.fromString(requestBody))
+            .post(requestUrl, Body.fromString(requestBody))
             .addHeaders(baseHeaders)
             .addHeader(Header.ContentType(MediaType.application.json))
         )

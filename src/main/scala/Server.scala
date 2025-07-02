@@ -106,31 +106,6 @@ object Server {
           is_meta_gare = None,
           stops = None,
           _carrier_id = None
-        )
-      )
-      val mockStops = List(
-        BusStop(
-          id = 1,
-          short_name = "Paris Bercy",
-          long_name = "Paris Bercy Station",
-          time_zone = "Europe/Paris",
-          latitude = Some(48.838424),
-          longitude = Some(2.382411),
-          destinations_ids = List(2, 3),
-          address = Some("48 bis Boulevard de Bercy 75012 Paris"),
-          short_name_de = None,
-          short_name_en = None,
-          short_name_fr = None,
-          short_name_it = None,
-          short_name_nl = None,
-          long_name_de = None,
-          long_name_en = None,
-          long_name_fr = None,
-          long_name_it = None,
-          long_name_nl = None,
-          is_meta_gare = None,
-          stops = None,
-          _carrier_id = None
         ),
         BusStop(
           id = 2,
