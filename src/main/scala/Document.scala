@@ -14,10 +14,10 @@ import io.circe.syntax.*
 // Data type for documents split horizontally or vertically
 sealed trait Document[A]
 
-case class Leaf[A](value: A) extends Document[A]
+case class Leaf[A](value: A)                       extends Document[A]
 case class Horizontal[A](cells: List[Document[A]]) extends Document[A]
-case class Vertical[A](cells: List[Document[A]]) extends Document[A]
-case class Empty[A]() extends Document[A]
+case class Vertical[A](cells: List[Document[A]])   extends Document[A]
+case class Empty[A]()                              extends Document[A]
 
 // Some error types for validation
 sealed trait DocumentError
@@ -107,9 +107,9 @@ object Document {
   // Semigroup and Monoid - for combining documents
   implicit def semigroup[A]: cats.Semigroup[Document[A]] = new cats.Semigroup[Document[A]] {
     def combine(x: Document[A], y: Document[A]): Document[A] = (x, y) match {
-      case (Empty(), d)                     => d
-      case (d, Empty())                     => d
-      case (d1, d2)                         => Vertical(List(d1, d2))
+      case (Empty(), d) => d
+      case (d, Empty()) => d
+      case (d1, d2)     => Vertical(List(d1, d2))
     }
   }
 
