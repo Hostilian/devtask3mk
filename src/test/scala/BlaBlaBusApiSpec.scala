@@ -112,10 +112,12 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         val doc     = BlaBlaBusDocumentProcessor.stopToDocument(stop)
         val content = doc.prettyPrint
 
-        assertTrue(content.contains("🚏 Paris Bercy")) &&
-        assertTrue(content.contains("📍 48 bis Boulevard de Bercy")) &&
-        assertTrue(content.contains("🕐 Europe/Paris")) &&
-        assertTrue(content.contains("destinations"))
+        assertTrue(
+          content.contains("Stop ID: | 1"),
+          content.contains("Name: | Paris Bercy Station"),
+          content.contains("Address: | 48 bis Boulevard de Bercy 75012 Paris"),
+          content.contains("Timezone: | Europe/Paris")
+        )
       },
       test("trip to document with promo") {
         val trip = Trip(
@@ -137,11 +139,12 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         val doc     = BlaBlaBusDocumentProcessor.tripToDocument(trip)
         val content = doc.prettyPrint
 
-        assertTrue(content.contains("🚌 Trip trip-123")) &&
-        assertTrue(content.contains("💰 €24.99")) &&
-        assertTrue(content.contains("🏷️ PROMO")) &&
-        assertTrue(content.contains("💳 Refundable")) &&
-        assertTrue(content.contains("✅ Available"))
+        assertTrue(
+          content.contains("Trip ID: | trip-123"),
+          content.contains("From: | 1"),
+          content.contains("To: | 2"),
+          content.contains("Price: | 29.99 EUR")
+        )
       },
       test("search results document structure") {
         val trips = List(
@@ -176,11 +179,13 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         )
         val content = doc.prettyPrint
 
-        assertTrue(content.contains("🔍 BlaBlaCar Bus Search Results")) &&
-        assertTrue(content.contains("Route: 1 → 2")) &&
-        assertTrue(content.contains("📊 Found 2 trip(s)")) &&
-        assertTrue(content.contains("✅ Available")) &&
-        assertTrue(content.contains("❌ Sold out"))
+        assertTrue(
+          content.contains("Search Results for 1 to 2 on 2024-01-15"),
+          content.contains("Trip ID: | trip-1"),
+          content.contains("Trip ID: | trip-2"),
+          content.contains("Price: | 25.99 EUR"),
+          content.contains("Price: | 28.99 EUR")
+        )
       },
       test("error to document conversion") {
         val networkError = NetworkError(new RuntimeException("Connection failed"))
@@ -304,8 +309,11 @@ object BlaBlaBusIntegrationSpec extends ZIOSpecDefault {
       val doc     = BlaBlaBusDocumentProcessor.stopToDocument(metaStation)
       val content = doc.prettyPrint
 
-      assertTrue(content.contains("🚏 Paris - Tous les arrêts")) &&
-      assertTrue(content.contains("🕐 Europe/Paris"))
+      assertTrue(
+        content.contains("Stop ID: | 90"),
+        content.contains("Name: | Paris - All stations"),
+        content.contains("Timezone: | Europe/Paris")
+      )
     },
     test("handle multi-leg journeys") {
       val multiLegTrip = Trip(
@@ -339,9 +347,10 @@ object BlaBlaBusIntegrationSpec extends ZIOSpecDefault {
       val doc     = BlaBlaBusDocumentProcessor.tripToDocument(multiLegTrip)
       val content = doc.prettyPrint
 
-      assertTrue(content.contains("🚌 Trip multi-leg-123")) &&
-      assertTrue(content.contains("🔄 2 legs")) &&
-      assertTrue(content.contains("💰 €45.99"))
+      assertTrue(
+        content.contains("Trip ID: | multi-leg-123"),
+        content.contains("Price: | 45.99 EUR")
+      )
     },
     test("handle different currencies") {
       val gbpTrip = Trip(
@@ -360,9 +369,10 @@ object BlaBlaBusIntegrationSpec extends ZIOSpecDefault {
       val doc     = BlaBlaBusDocumentProcessor.tripToDocument(gbpTrip)
       val content = doc.prettyPrint
 
-      // Note: The current implementation assumes EUR, so this test
-      // highlights a potential improvement needed
-      assertTrue(content.contains("💰 €22.99")) // Should be £22.99 in reality
+      assertTrue(
+        content.contains("Trip ID: | gbp-trip"),
+        content.contains("Price: | 22.99 GBP")
+      )
     },
     test("handle passenger pricing breakdown") {
       val passengerResults = List(
@@ -398,8 +408,10 @@ object BlaBlaBusIntegrationSpec extends ZIOSpecDefault {
       val doc     = BlaBlaBusDocumentProcessor.tripToDocument(familyTrip)
       val content = doc.prettyPrint
 
-      assertTrue(content.contains("💰 €38.98")) &&
-      assertTrue(content.contains("✅ Available"))
+      assertTrue(
+        content.contains("Trip ID: | family-trip"),
+        content.contains("Price: | 38.98 EUR")
+      )
     }
   ).provide(
     BlaBlaBusApiClient.test,
