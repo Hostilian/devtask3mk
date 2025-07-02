@@ -72,7 +72,7 @@ object Server {
             val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
               request.origin_id,
               request.destination_id,
-              LocalDate.parse(request.date.nn),
+              LocalDate.parse(request.date).nn,
               mockTrips
             )
             Ok(Cli.prettyPrint(doc))
@@ -131,7 +131,7 @@ object Server {
     case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
       val tomorrow = LocalDate.now().nn.plusDays(1)
-      val searchDate = date.getOrElse(LocalDate.now().nn.plusDays(1))
+      val searchDate = date.getOrElse(LocalDate.now().nn.plusDays(1)).nn
       val mockTrips = List(
         Trip(
           id = s"quick-${origin}-${destination}",
@@ -147,7 +147,7 @@ object Server {
         )
       )
       val resultsDoc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
-        origin, destination, searchDate, mockTrips
+        origin, destination, searchDate.nn, mockTrips
       )
       Ok(Cli.prettyPrint(resultsDoc))
   }
