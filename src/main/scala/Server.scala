@@ -27,7 +27,7 @@ import scala.util.Try
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
     val safeStr = Option(str).getOrElse("")
-    if (safeStr.trim.isEmpty) {
+    if (safeStr.nn.trim.isEmpty) {
       Left(ParseFailure("Missing date", "Date parameter is empty"))
     } else {
       Try(LocalDate.parse(safeStr)).toEither
@@ -139,7 +139,7 @@ object Server {
     // Quick search with query parameters
     case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
-      val searchDate: LocalDate = date.getOrElse(LocalDate.now().nn.plusDays(1))
+      val searchDate: LocalDate = date.getOrElse(Option(LocalDate.now()).getOrElse(LocalDate.of(2000,1,1)).plusDays(1))
       val mockTrips = List(
         Trip(
           id = s"quick-${origin}-${destination}",
