@@ -108,7 +108,7 @@ object Server {
           _carrier_id = None
         )
       )
-      val stopsDoc = Vertical(List(
+      val mockStops = List(
         BusStop(
           id = 1,
           short_name = "Paris Bercy",
@@ -131,8 +131,32 @@ object Server {
           is_meta_gare = None,
           stops = None,
           _carrier_id = None
+        ),
+        BusStop(
+          id = 2,
+          short_name = "Lyon Part-Dieu",
+          long_name = "Lyon Part-Dieu Station",
+          time_zone = "Europe/Paris",
+          latitude = Some(45.760696),
+          longitude = Some(4.859054),
+          destinations_ids = List(1, 3),
+          address = Some("Place Charles Béraudier, 69003 Lyon"),
+          short_name_de = None,
+          short_name_en = None,
+          short_name_fr = None,
+          short_name_it = None,
+          short_name_nl = None,
+          long_name_de = None,
+          long_name_en = None,
+          long_name_fr = None,
+          long_name_it = None,
+          long_name_nl = None,
+          is_meta_gare = None,
+          stops = None,
+          _carrier_id = None
         )
-      ))
+      )
+      val stopsDoc = Vertical(mockStops.map(BlaBlaBusDocumentProcessor.stopToDocument))
       Ok(Cli.prettyPrint(stopsDoc))
 
     // Display trip details
