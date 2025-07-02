@@ -26,7 +26,7 @@ import scala.util.Try
 // Implicit decoder for LocalDate query params
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
-    Try(LocalDate.parse(str)).toEither.left.map(t => ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error").nn))
+    Try(LocalDate.parse(str)).toEither.left.map(t => ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error")))
   }
 object DateParam extends org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
@@ -132,7 +132,7 @@ object Server {
     // Quick search with query parameters
     case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
-      val searchDate = date.getOrElse(LocalDate.now().plusDays(1)).nn
+      val searchDate = date.getOrElse(LocalDate.now().nn.plusDays(1)).nn
       val mockTrips = List(
         Trip(
           id = s"quick-${origin}-${destination}",
