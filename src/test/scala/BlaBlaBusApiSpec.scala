@@ -245,6 +245,84 @@ object BlaBlaBusIntegrationSpec extends ZIOSpecDefault {
         content.contains("Trip ID: | family-trip"),
         content.contains("Price: | 38.98 EUR")
       )
+    },
+    test("stop to document conversion") {
+      val stop = BusStop(
+        id = 1,
+        short_name = "Paris Bercy",
+        long_name = "Paris Bercy Station",
+        time_zone = "Europe/Paris",
+        latitude = Some(48.838424),
+        longitude = Some(2.382411),
+        destinations_ids = List(2, 3),
+        address = Some("48 bis Boulevard de Bercy 75012 Paris")
+      )
+      val doc     = BlaBlaBusDocumentProcessor.stopToDocument(stop)
+      val content = doc.prettyPrint
+      assertTrue(content.contains("Stop ID: | 1")) &&
+      assertTrue(content.contains("Name: | Paris Bercy Station")) &&
+      assertTrue(content.contains("Address: | 48 bis Boulevard de Bercy 75012 Paris")) &&
+      assertTrue(content.contains("Timezone: | Europe/Paris"))
+    },
+    test("trip to document with promo") {
+      val trip = Trip(
+        id = "trip-123",
+        origin_id = 1,
+        destination_id = 2,
+        departure = "2024-01-15T08:30:00+01:00",
+        arrival = "2024-01-15T12:45:00+01:00",
+        available = true,
+        price_cents = 2999,
+        price_currency = "EUR",
+        price_promo_cents = Some(2499),
+        is_promo = Some(true),
+        is_refundable = Some(true),
+        legs = List.empty,
+        passengers = List.empty
+      )
+      val doc     = BlaBlaBusDocumentProcessor.tripToDocument(trip)
+      val content = doc.prettyPrint
+      assertTrue(content.contains("Trip ID: | trip-123")) &&
+      assertTrue(content.contains("From: | 1")) &&
+      assertTrue(content.contains("To: | 2")) &&
+      assertTrue(content.contains("Departure: | 2024-01-15T08:30:00+01:00")) &&
+      assertTrue(content.contains("Arrival: | 2024-01-15T12:45:00+01:00")) &&
+      assertTrue(content.contains("Price: | 29.99 EUR"))
+    },
+    test("search results document structure") {
+      val trips = List(
+        Trip(
+          id = "trip-1",
+          origin_id = 1,
+          destination_id = 2,
+          departure = "2024-01-15T08:30:00+01:00",
+          arrival = "2024-01-15T12:45:00+01:00",
+          available = true,
+          price_cents = 2599,
+          price_currency = "EUR",
+          legs = List.empty,
+          passengers = List.empty
+        ),
+        Trip(
+          id = "trip-2",
+          origin_id = 1,
+          destination_id = 2,
+          departure = "2024-01-15T14:30:00+01:00",
+          arrival = "2024-01-15T18:45:00+01:00",
+          available = false,
+          price_cents = 2899,
+          price_currency = "EUR",
+          legs = List.empty,
+          passengers = List.empty
+        )
+      )
+      val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
+        1, 2, LocalDate.of(2024, 1, 15).nn, trips
+      )
+      val content = doc.prettyPrint
+      assertTrue(content.contains("Search Results for 1 to 2 on 2024-01-15")) &&
+      assertTrue(content.contains("Trip ID: | trip-1")) &&
+      assertTrue(content.contains("Trip ID: | trip-2"))
     }
   ).provide(
     BlaBlaBusApiClient.test,
