@@ -249,7 +249,7 @@ class BlaBlaBusApiClientImpl(
     val request = SearchRequest(
       origin_id = originId,
       destination_id = destinationId,
-      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE).nn).getOrElse(""),
+      date = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
@@ -536,7 +536,7 @@ class MockBlaBlaBusApiClient extends BlaBlaBusApiClient {
     val request = SearchRequest(
       origin_id = originId,
       destination_id = destinationId,
-      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE).nn).getOrElse(""),
+      date = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
