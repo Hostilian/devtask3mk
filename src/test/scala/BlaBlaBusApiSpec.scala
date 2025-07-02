@@ -7,6 +7,7 @@ import java.time.{LocalDate, LocalDateTime}
 import com.example.BlaBlaBusDocumentProcessor
 import com.example.BusStop
 import com.example.Trip
+import com.example.Cli._
 
 /** Test suite for BlaBlaCar Bus API document rendering using real data models. */
 object BlaBlaBusApiSpec extends ZIOSpecDefault {
@@ -31,8 +32,8 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
           passengers = List.empty
         )
       )
-      val doc     = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date, trips)
-      val content = doc.prettyPrint
+      val doc     = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date.asInstanceOf[LocalDate], trips)
+      val content = Cli.prettyPrint(doc)
       assertTrue(
         content.contains("Trip ID: | demo-trip-1"),
         content.contains("Price: | 25.99 EUR"),
@@ -44,8 +45,8 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
       val originId      = 1
       val destinationId = 2
       val date          = LocalDate.parse("2025-07-02")
-      val doc           = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date, Nil)
-      val content       = doc.prettyPrint
+      val doc           = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date.asInstanceOf[LocalDate], Nil)
+      val content       = Cli.prettyPrint(doc)
       assertTrue(content.toLowerCase.contains("no routes found"))
     },
     test("tripToDocument renders trip details correctly") {
@@ -64,7 +65,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         passengers = List.empty
       )
       val doc     = BlaBlaBusDocumentProcessor.tripToDocument(trip)
-      val content = doc.prettyPrint
+      val content = Cli.prettyPrint(doc)
       assertTrue(
         content.contains("Trip ID: | trip-xyz"),
         content.contains("Price: | 19.99 EUR"),
@@ -77,11 +78,27 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         id = 42,
         short_name = "Paris Bercy",
         long_name = "Paris Bercy Seine Bus Station",
+        short_name_de = None,
+        short_name_en = None,
+        short_name_fr = None,
+        short_name_it = None,
+        short_name_nl = None,
+        long_name_de = None,
+        long_name_en = None,
+        long_name_fr = None,
+        long_name_it = None,
+        long_name_nl = None,
         time_zone = "Europe/Paris",
-        latitude = Some(48.8352)
+        latitude = Some(48.8352),
+        longitude = Some(2.382411),
+        destinations_ids = List(),
+        is_meta_gare = None,
+        address = None,
+        stops = None,
+        _carrier_id = None
       )
       val doc     = BlaBlaBusDocumentProcessor.stopToDocument(stop)
-      val content = doc.prettyPrint
+      val content = Cli.prettyPrint(doc)
       assertTrue(
         content.contains("Stop ID: | 42"),
         content.contains("Short Name: | Paris Bercy"),
