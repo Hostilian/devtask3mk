@@ -139,7 +139,7 @@ object Server {
     // Quick search with query parameters
     case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
-      val searchDate: LocalDate = date.getOrElse(LocalDate.of(2024, 1, 1).plusDays(1))
+      val searchDate: LocalDate = date.getOrElse(LocalDate.of(2024, 1, 1).nn.plusDays(1))
       val mockTrips = List(
         Trip(
           id = s"quick-${origin}-${destination}",
