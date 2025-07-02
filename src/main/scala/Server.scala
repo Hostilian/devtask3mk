@@ -30,9 +30,7 @@ import org.http4s.ParseFailure
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
     val safeStr = Option(str).getOrElse("")
-    if (safeStr.nonEmpty)
-      Try(LocalDate.parse(safeStr)).toEither.left.map(t => ParseFailure("Invalid date", t.getMessage.nn))
-    else Left(ParseFailure("Invalid date", "Empty string"))
+    Try(LocalDate.parse(safeStr)).toEither.left.map(t => ParseFailure("Invalid date", t.getMessage.nn)).map(_.nn)
   }.map(_.nn)
 object DateParam extends org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
@@ -74,7 +72,7 @@ object Server {
             val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
               request.origin_id,
               request.destination_id,
-              LocalDate.parse(request.date).nn,
+              LocalDate.parse(request.date.nn).nn,
               mockTrips
             )
             Ok(Cli.prettyPrint(doc))
@@ -94,10 +92,47 @@ object Server {
           latitude = Some(48.838424),
           longitude = Some(2.382411),
           destinations_ids = List(2, 3),
-          address = Some("48 bis Boulevard de Bercy 75012 Paris")
+          address = Some("48 bis Boulevard de Bercy 75012 Paris"),
+          short_name_de = None,
+          short_name_en = None,
+          short_name_fr = None,
+          short_name_it = None,
+          short_name_nl = None,
+          long_name_de = None,
+          long_name_en = None,
+          long_name_fr = None,
+          long_name_it = None,
+          long_name_nl = None,
+          is_meta_gare = None,
+          stops = None,
+          _carrier_id = None
         )
       )
-      val stopsDoc = Vertical(mockStops.map(BlaBlaBusDocumentProcessor.stopToDocument))
+      val stopsDoc = Vertical(List(
+        BusStop(
+          id = 1,
+          short_name = "Paris Bercy",
+          long_name = "Paris Bercy Station",
+          time_zone = "Europe/Paris",
+          latitude = Some(48.838424),
+          longitude = Some(2.382411),
+          destinations_ids = List(2, 3),
+          address = Some("48 bis Boulevard de Bercy 75012 Paris"),
+          short_name_de = None,
+          short_name_en = None,
+          short_name_fr = None,
+          short_name_it = None,
+          short_name_nl = None,
+          long_name_de = None,
+          long_name_en = None,
+          long_name_fr = None,
+          long_name_it = None,
+          long_name_nl = None,
+          is_meta_gare = None,
+          stops = None,
+          _carrier_id = None
+        )
+      ))
       Ok(Cli.prettyPrint(stopsDoc))
 
     // Display trip details
@@ -123,7 +158,7 @@ object Server {
     case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
       val tomorrow = LocalDate.now().nn.plusDays(1)
-      val searchDate = date.getOrElse(tomorrow).nn
+      val searchDate = date.getOrElse(LocalDate.now().nn.plusDays(1)).nn
       val mockTrips = List(
         Trip(
           id = s"quick-${origin}-${destination}",

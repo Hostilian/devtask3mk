@@ -175,26 +175,26 @@ class BlaBlaBusApiClientImpl(
     Header.Custom("Accept-Encoding", "gzip")
   )
   
-  def getStops(): Task[List[BusStop]] = {
-    val url = s"${config.baseUrl}/${config.version}/stops"
-    for {
-      response <- client
-        .request(
-          Request.get(url).addHeaders(baseHeaders)
-        )
-        .timeout(config.timeout)
-        .retry(Schedule.recurs(config.retries))
-        .catchAll(handleNetworkError)
-      actualResponse = response match {
-        case r: zio.http.Response => r
-        case Some(r: zio.http.Response) => r
-        case _ => throw BusApiParseError("Invalid response type")
-      }
-      body <- actualResponse.body.asString.orDie
-      stopsResponse <- ZIO.fromEither(body.fromJson[StopsResponse])
-        .mapError(BusApiParseError.apply)
-    } yield stopsResponse.stops
-  }
+  def getStops(): Task[List[BusStop]] =
+    ZIO.scoped {
+      for {
+        response <- client
+          .request(
+            Request.get(url).addHeaders(baseHeaders)
+          )
+          .timeout(config.timeout)
+          .retry(Schedule.recurs(config.retries))
+          .catchAll(handleNetworkError)
+        actualResponse = response match {
+          case r: zio.http.Response => r
+          case Some(r: zio.http.Response) => r
+          case _ => throw BusApiParseError("Invalid response type")
+        }
+        body <- actualResponse.body.asString.orDie
+        stopsResponse <- ZIO.fromEither(body.fromJson[StopsResponse])
+          .mapError(BusApiParseError.apply)
+      } yield stopsResponse.stops
+    }.orDie
 
   def getFares(
     originId: Option[Int] = None,
@@ -204,54 +204,50 @@ class BlaBlaBusApiClientImpl(
     endDate: Option[LocalDate] = None,
     currencies: List[String] = List.empty,
     updatedAfter: Option[LocalDateTime] = None
-  ): Task[List[Fare]] = {
-    val queryParams = buildFareQueryParams(
-      originId, destinationId, date, startDate, endDate, currencies, updatedAfter
-    )
-    val url = s"${config.baseUrl}/${config.version}/fares"
-    for {
-      response <- client
-        .request(
-          Request.get(url + queryParams).addHeaders(baseHeaders)
-        )
-        .timeout(config.timeout)
-        .retry(Schedule.recurs(config.retries))
-        .catchAll(handleNetworkError)
-      actualResponse = response match {
-        case r: zio.http.Response => r
-        case Some(r: zio.http.Response) => r
-        case _ => throw BusApiParseError("Invalid response type")
-      }
-      body <- actualResponse.body.asString.orDie
-      faresResponse <- ZIO.fromEither(body.fromJson[FaresResponse])
-        .mapError(BusApiParseError.apply)
-    } yield faresResponse.fares
-  }
+  ): Task[List[Fare]] =
+    ZIO.scoped {
+      for {
+        response <- client
+          .request(
+            Request.get(url + queryParams).addHeaders(baseHeaders)
+          )
+          .timeout(config.timeout)
+          .retry(Schedule.recurs(config.retries))
+          .catchAll(handleNetworkError)
+        actualResponse = response match {
+          case r: zio.http.Response => r
+          case Some(r: zio.http.Response) => r
+          case _ => throw BusApiParseError("Invalid response type")
+        }
+        body <- actualResponse.body.asString.orDie
+        faresResponse <- ZIO.fromEither(body.fromJson[FaresResponse])
+          .mapError(BusApiParseError.apply)
+      } yield faresResponse.fares
+    }.orDie
 
-  def searchRoutes(request: SearchRequest): Task[List[Trip]] = {
-    val url = s"${config.baseUrl}/${config.version}/search"
-    val requestBody = request.toJson
-    for {
-      response <- client
-        .request(
-          Request
-            .post(url, Body.fromString(requestBody))
-            .addHeaders(baseHeaders)
-            .addHeader(Header.ContentType(MediaType.application.json))
-        )
-        .timeout(config.timeout)
-        .retry(Schedule.recurs(config.retries))
-        .catchAll(handleNetworkError)
-      actualResponse = response match {
-        case r: zio.http.Response => r
-        case Some(r: zio.http.Response) => r
-        case _ => throw BusApiParseError("Invalid response type")
-      }
-      body <- actualResponse.body.asString.orDie
-      tripsResponse <- ZIO.fromEither(body.fromJson[TripsResponse])
-        .mapError(BusApiParseError.apply)
-    } yield tripsResponse.trips
-  }
+  def searchRoutes(request: SearchRequest): Task[List[Trip]] =
+    ZIO.scoped {
+      for {
+        response <- client
+          .request(
+            Request
+              .post(url, Body.fromString(requestBody))
+              .addHeaders(baseHeaders)
+              .addHeader(Header.ContentType(MediaType.application.json))
+          )
+          .timeout(config.timeout)
+          .retry(Schedule.recurs(config.retries))
+          .catchAll(handleNetworkError)
+        actualResponse = response match {
+          case r: zio.http.Response => r
+          case Some(r: zio.http.Response) => r
+          case _ => throw BusApiParseError("Invalid response type")
+        }
+        body <- actualResponse.body.asString.orDie
+        tripsResponse <- ZIO.fromEither(body.fromJson[TripsResponse])
+          .mapError(BusApiParseError.apply)
+      } yield tripsResponse.trips
+    }.orDie
 
   def searchRoutes(
     originId: Int,
@@ -264,7 +260,7 @@ class BlaBlaBusApiClientImpl(
     val request = SearchRequest(
       origin_id = originId,
       destination_id = destinationId,
-      date = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
+      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE).nn).getOrElse(""),
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
@@ -370,7 +366,7 @@ object BlaBlaBusDocumentProcessor {
     ).flatten
     val featuresDoc: List[Document[String]] =
       if (features.nonEmpty) List(Leaf(features.mkString(" \u2022 "))) else List.empty
-    Vertical(List(header, pricing, timing, availability) ++ featuresDoc)
+    Vertical(List(header, pricing, timing, availability).map(_.asInstanceOf[Document[String]]) ++ featuresDoc.asInstanceOf[List[Document[String]]])
   }
   def searchResultsToDocument(
     originId: Int,
@@ -432,8 +428,7 @@ object BlaBlaBusDocumentProcessor {
   private def formatTime(timeString: String): String = {
     try {
       val dateTime = Option(LocalDateTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)).orNull
-      if (dateTime != null) dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
-      else timeString.take(5)
+      if (dateTime != null) dateTime.format(DateTimeFormatter.ofPattern("HH:mm")).nn else timeString.take(5)
     } catch {
       case _: Exception => timeString.take(5)
     }
@@ -550,9 +545,9 @@ class MockBlaBlaBusApiClient extends BlaBlaBusApiClient {
     transfers: Int = 0
   ): Task[List[Trip]] = {
     val request = SearchRequest(
-      origin_id = OriginId,
-      destination_id = DestinationId,
-      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE)).getOrElse(""),
+      origin_id = originId,
+      destination_id = destinationId,
+      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE).nn).getOrElse(""),
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
