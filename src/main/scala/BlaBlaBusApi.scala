@@ -185,7 +185,11 @@ class BlaBlaBusApiClientImpl(
         .timeout(config.timeout)
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
-      body <- response.body.asString.orDie
+      body <- response match {
+        case r: zio.http.Response => r.body.asString.orDie
+        case Some(r: zio.http.Response) => r.body.asString.orDie
+        case _ => ZIO.fail(BusApiParseError("Invalid response type"))
+      }
       stopsResponse <- ZIO.fromEither(body.fromJson[StopsResponse])
         .mapError(BusApiParseError.apply)
     } yield stopsResponse.stops
@@ -249,7 +253,7 @@ class BlaBlaBusApiClientImpl(
     val request = SearchRequest(
       origin_id = originId,
       destination_id = destinationId,
-      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE)).getOrElse(""),
+      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE)).getOrElse("").nn,
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
@@ -354,8 +358,8 @@ object BlaBlaBusDocumentProcessor {
       if (trip.legs.length > 1) Some(s"🔄 ${trip.legs.length} legs") else None
     ).flatten
     val featuresDoc: List[Document[String]] =
-      if (features.nonEmpty) List(Leaf(features.mkString(" • "))) else List.empty
-    Vertical(List(header, pricing, timing, availability) ++ featuresDoc)
+      if (features.nonEmpty) List(Leaf(features.mkString(" • ")).asInstanceOf[Document[String]]) else List.empty
+    Vertical(List(header, pricing, timing, availability) ++ featuresDoc.asInstanceOf[List[Document[String]]])
   }
   def searchResultsToDocument(
     originId: Int,
@@ -416,7 +420,7 @@ object BlaBlaBusDocumentProcessor {
   }
   private def formatTime(timeString: String): String = {
     try {
-      val dateTime = LocalDateTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+      val dateTime = Option(LocalDateTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)).nn
       dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
     } catch {
       case _: Exception => timeString.take(5)

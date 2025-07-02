@@ -21,8 +21,6 @@ lazy val root = project
       "org.typelevel" %% "cats-laws" % "2.12.0",
       "org.typelevel" %% "cats-mtl" % "1.4.0",
       "org.typelevel" %% "cats-parse" % "1.0.0",
-      "org.typelevel" %% "cats-tagless-macros" % "0.14.0",
-      "org.typelevel" %% "cats-tagless-core" % "0.14.0",
       "io.circe" %% "circe-core" % "0.14.10",
       "io.circe" %% "circe-generic" % "0.14.10",
       "io.circe" %% "circe-parser" % "0.14.10",

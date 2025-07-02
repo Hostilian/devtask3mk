@@ -98,7 +98,7 @@ object Server {
           address = Some("Place Charles Béraudier, 69003 Lyon")
         )
       )
-      val stopsDoc = Document.Vertical(mockStops.map(BlaBlaBusDocumentProcessor.stopToDocument))
+      val stopsDoc = Vertical(mockStops.map(BlaBlaBusDocumentProcessor.stopToDocument))
       Ok(stopsDoc.prettyPrint)
 
     // Display trip details
@@ -123,7 +123,7 @@ object Server {
     // Quick search with query parameters
     case GET -> Root / "api" / "bus" / "quick-search" :? 
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
-      val tomorrow = LocalDate.now().plusDays(1)
+      val tomorrow = Option(LocalDate.now()).getOrElse(LocalDate.of(2000,1,1)).plusDays(1)
       val searchDate = date.getOrElse(tomorrow)
       
       val mockTrips = List(
