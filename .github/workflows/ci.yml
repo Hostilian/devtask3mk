@@ -242,7 +242,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker-build]
     if: github.ref == 'refs/heads/develop'
-    environment: staging
     steps:
       - name: Deploy to staging
         run: |
@@ -254,7 +253,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [docker-build, performance-test]
     if: github.ref == 'refs/heads/main'
-    environment: production
     steps:
       - name: Deploy to production
         run: |
