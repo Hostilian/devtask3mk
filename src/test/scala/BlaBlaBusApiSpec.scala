@@ -5,6 +5,7 @@ import zio.test._
 import zio.test.Assertion._
 import zio.http._
 import java.time.{LocalDate, LocalDateTime}
+import Document.given
 
 /** Comprehensive test suite for BlaBlaCar Bus API integration
   */
