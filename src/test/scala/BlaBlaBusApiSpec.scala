@@ -4,7 +4,6 @@ import zio._
 import zio.test._
 import zio.test.Assertion._
 import java.time.{LocalDate, LocalDateTime}
-import com.example.BlaBlaBusApi._
 import com.example.BlaBlaBusDocumentProcessor
 
 /** Test suite for BlaBlaCar Bus API document rendering using real data models. */
