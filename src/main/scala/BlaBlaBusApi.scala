@@ -252,7 +252,7 @@ class BlaBlaBusApiClientImpl(
     val request = SearchRequest(
       origin_id = originId,
       destination_id = destinationId,
-      date = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
+      date = date.nn.format(DateTimeFormatter.ISO_LOCAL_DATE),
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
@@ -384,7 +384,7 @@ object BlaBlaBusDocumentProcessor {
     val header = Vertical(List(
       Leaf("🔍 BlaBlaCar Bus Search Results"),
       Leaf(s"Route: $originId → $destinationId"),
-      Leaf(s"📅 ${date.format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy"))}")
+      Leaf(s"📅 ${date.nn.format(DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy"))}")
     ))
     
     val separator = Leaf("─" * 50)
