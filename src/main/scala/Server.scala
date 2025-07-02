@@ -53,7 +53,7 @@ object Server {
           case Right(request) =>
             Try(LocalDate.parse(request.date)) match {
               case scala.util.Success(parsedDate) =>
-                val safeDate = Option(parsedDate).getOrElse(LocalDate.now())
+                val safeDate = Option(parsedDate).getOrElse(LocalDate.now()).nn
                 val mockTrips = List(
                   Trip(
                     id = "demo-trip-1",
