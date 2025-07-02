@@ -14,38 +14,10 @@ import io.circe.syntax.*
 // Data type for documents split horizontally or vertically
 sealed trait Document[A]
 
-case class Leaf[A](value: A) extends Document[A] {
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Leaf[?]]
-  override def equals(obj: Any): Boolean = obj match {
-    case that: Leaf[?] => this.value == that.value
-    case _ => false
-  }
-  override def hashCode(): Int = value.hashCode()
-}
-case class Horizontal[A](cells: List[Document[A]]) extends Document[A] {
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Horizontal[?]]
-  override def equals(obj: Any): Boolean = obj match {
-    case that: Horizontal[?] => this.cells == that.cells
-    case _ => false
-  }
-  override def hashCode(): Int = cells.hashCode()
-}
-case class Vertical[A](cells: List[Document[A]]) extends Document[A] {
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Vertical[?]]
-  override def equals(obj: Any): Boolean = obj match {
-    case that: Vertical[?] => this.cells == that.cells
-    case _ => false
-  }
-  override def hashCode(): Int = cells.hashCode()
-}
-case class Empty[A]() extends Document[A] {
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[Empty[?]]
-  override def equals(obj: Any): Boolean = obj match {
-    case _: Empty[?] => true
-    case _ => false
-  }
-  override def hashCode(): Int = 0
-}
+case class Leaf[A](value: A) extends Document[A]
+case class Horizontal[A](cells: List[Document[A]]) extends Document[A]
+case class Vertical[A](cells: List[Document[A]]) extends Document[A]
+case class Empty[A]() extends Document[A]
 
 // Some error types for validation
 sealed trait DocumentError
