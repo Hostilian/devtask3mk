@@ -14,10 +14,18 @@ import io.circe.syntax.*
 // Data type for documents split horizontally or vertically
 sealed trait Document[A]
 
-case class Leaf[A](value: A)                       extends Document[A]
-case class Horizontal[A](cells: List[Document[A]]) extends Document[A]
-case class Vertical[A](cells: List[Document[A]])   extends Document[A]
-case class Empty[A]()                              extends Document[A]
+case class Leaf[A](value: A) extends Document[A] {
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Leaf[_]]
+}
+case class Horizontal[A](cells: List[Document[A]]) extends Document[A] {
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Horizontal[_]]
+}
+case class Vertical[A](cells: List[Document[A]]) extends Document[A] {
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Vertical[_]]
+}
+case class Empty[A]() extends Document[A] {
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[Empty[_]]
+}
 
 // Some error types for validation
 sealed trait DocumentError
