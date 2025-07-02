@@ -60,4 +60,4 @@ Possibilities are endless, here’s how each requested topic is addressed:
 
 ## Summary
 
-Every required concept is implemented, tested, and demonstrated with real code, examples, and documentation. The project is a complete, type-safe, and extensible solution that matches the assignment’s intent and spirit. (this perfectly describe SCALA)
+Every required concept is implemented, tested, and demonstrated with real code, examples, and documentation. The project is a complete, type-safe, and extensible solution, (this is the perfect usage for SCALA)

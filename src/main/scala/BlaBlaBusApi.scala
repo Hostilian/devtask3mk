@@ -185,11 +185,12 @@ class BlaBlaBusApiClientImpl(
         .timeout(config.timeout)
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
-      body <- response match {
-        case r: zio.http.Response => r.body.asString.orDie
-        case Some(r: zio.http.Response) => r.body.asString.orDie
-        case _ => ZIO.fail(BusApiParseError("Invalid response type"))
+      actualResponse = response match {
+        case r: zio.http.Response => r
+        case Some(r: zio.http.Response) => r
+        case _ => return ZIO.fail(BusApiParseError("Invalid response type"))
       }
+      body <- actualResponse.body.asString.orDie
       stopsResponse <- ZIO.fromEither(body.fromJson[StopsResponse])
         .mapError(BusApiParseError.apply)
     } yield stopsResponse.stops
@@ -216,7 +217,12 @@ class BlaBlaBusApiClientImpl(
         .timeout(config.timeout)
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
-      body <- response.body.asString.orDie
+      actualResponse = response match {
+        case r: zio.http.Response => r
+        case Some(r: zio.http.Response) => r
+        case _ => return ZIO.fail(BusApiParseError("Invalid response type"))
+      }
+      body <- actualResponse.body.asString.orDie
       faresResponse <- ZIO.fromEither(body.fromJson[FaresResponse])
         .mapError(BusApiParseError.apply)
     } yield faresResponse.fares
@@ -236,7 +242,12 @@ class BlaBlaBusApiClientImpl(
         .timeout(config.timeout)
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
-      body <- response.body.asString.orDie
+      actualResponse = response match {
+        case r: zio.http.Response => r
+        case Some(r: zio.http.Response) => r
+        case _ => return ZIO.fail(BusApiParseError("Invalid response type"))
+      }
+      body <- actualResponse.body.asString.orDie
       tripsResponse <- ZIO.fromEither(body.fromJson[TripsResponse])
         .mapError(BusApiParseError.apply)
     } yield tripsResponse.trips
@@ -253,7 +264,7 @@ class BlaBlaBusApiClientImpl(
     val request = SearchRequest(
       origin_id = originId,
       destination_id = destinationId,
-      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE)).getOrElse("").nn,
+      date = Option(date).map(_.nn.format(DateTimeFormatter.ISO_LOCAL_DATE)).getOrElse("").nn,
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
@@ -358,8 +369,8 @@ object BlaBlaBusDocumentProcessor {
       if (trip.legs.length > 1) Some(s"🔄 ${trip.legs.length} legs") else None
     ).flatten
     val featuresDoc: List[Document[String]] =
-      if (features.nonEmpty) List(Leaf(features.mkString(" • ")).asInstanceOf[Document[String]]) else List.empty
-    Vertical(List(header, pricing, timing, availability) ++ featuresDoc.asInstanceOf[List[Document[String]]])
+      if (features.nonEmpty) List(Leaf(features.mkString(" \u2022 "))) else List.empty
+    Vertical(List(header, pricing, timing, availability).asInstanceOf[List[Document[String]]] ++ featuresDoc)
   }
   def searchResultsToDocument(
     originId: Int,
@@ -420,8 +431,9 @@ object BlaBlaBusDocumentProcessor {
   }
   private def formatTime(timeString: String): String = {
     try {
-      val dateTime = Option(LocalDateTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)).nn
-      dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+      val dateTime = Option(LocalDateTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)).orNull
+      if (dateTime != null) dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+      else timeString.take(5)
     } catch {
       case _: Exception => timeString.take(5)
     }
@@ -445,7 +457,6 @@ object BlaBlaBusApiClient {
 
 // Mock implementation for testing
 class MockBlaBlaBusApiClient extends BlaBlaBusApiClient {
-  
   def getStops(): Task[List[BusStop]] = ZIO.succeed(List(
     BusStop(
       id = 1,
@@ -465,10 +476,9 @@ class MockBlaBlaBusApiClient extends BlaBlaBusApiClient {
       latitude = Some(45.760696),
       longitude = Some(4.859054),
       destinations_ids = List(1, 3, 4),
-      address = Some("Place Charles Béraudier, 69003 Lyon")
+      address = Some("Place Charles B\u00e9raudier, 69003 Lyon")
     )
   ))
-  
   def getFares(
     originId: Option[Int] = None,
     destinationId: Option[Int] = None,
@@ -499,7 +509,6 @@ class MockBlaBlaBusApiClient extends BlaBlaBusApiClient {
       )
     )
   ))
-  
   def searchRoutes(request: SearchRequest): Task[List[Trip]] = ZIO.succeed(List(
     Trip(
       id = "trip-123",
@@ -532,7 +541,6 @@ class MockBlaBlaBusApiClient extends BlaBlaBusApiClient {
       }
     )
   ))
-  
   def searchRoutes(
     originId: Int,
     destinationId: Int,
@@ -542,9 +550,9 @@ class MockBlaBlaBusApiClient extends BlaBlaBusApiClient {
     transfers: Int = 0
   ): Task[List[Trip]] = {
     val request = SearchRequest(
-      origin_id = originId,
-      destination_id = destinationId,
-      date = date.nn.format(DateTimeFormatter.ISO_LOCAL_DATE),
+      origin_id = OriginId,
+      destination_id = DestinationId,
+      date = Option(date).map(_.format(DateTimeFormatter.ISO_LOCAL_DATE)).getOrElse(""),
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)
