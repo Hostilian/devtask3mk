@@ -54,15 +54,15 @@ object Server {
         result <- searchReq match {
           case Right(request) =>
             Try(LocalDate.parse(request.date)) match {
-              case scala.util.Success(parsedDate) =>
-                val safeDate = Option(parsedDate).getOrElse(LocalDate.now())
+              case scala.util.Success(parsedDate0) =>
+                val parsedDate = parsedDate0.nn
                 val mockTrips = List(
                   Trip(
                     id = "demo-trip-1",
                     origin_id = request.origin_id,
                     destination_id = request.destination_id,
-                    departure = s"${safeDate.nn}T08:30:00+01:00",
-                    arrival = s"${safeDate.nn}T12:45:00+01:00",
+                    departure = s"${parsedDate}T08:30:00+01:00",
+                    arrival = s"${parsedDate}T12:45:00+01:00",
                     available = true,
                     price_cents = 2599,
                     price_currency = "EUR",
@@ -73,7 +73,7 @@ object Server {
                 val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
                   request.origin_id,
                   request.destination_id,
-                  safeDate.nn,
+                  parsedDate,
                   mockTrips
                 )
                 Ok(Cli.prettyPrint(doc))
@@ -140,8 +140,8 @@ object Server {
           id = s"quick-${origin}-${destination}",
           origin_id = origin,
           destination_id = destination,
-          departure = s"${searchDate.nn}T08:30:00+01:00",
-          arrival = s"${searchDate.nn}T12:45:00+01:00",
+          departure = s"${searchDate}T08:30:00+01:00",
+          arrival = s"${searchDate}T12:45:00+01:00",
           available = true,
           price_cents = 2599,
           price_currency = "EUR",
@@ -152,7 +152,7 @@ object Server {
       val resultsDoc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
         origin,
         destination,
-        searchDate.nn,
+        searchDate,
         mockTrips
       )
       Ok(Cli.prettyPrint(resultsDoc))
