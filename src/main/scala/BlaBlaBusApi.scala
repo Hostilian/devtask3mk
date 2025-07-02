@@ -191,12 +191,16 @@ class BlaBlaBusApiClientImpl(
 
   def getStops(): Task[List[BusStop]] = {
     val url = s"${config.baseUrl}/${config.version}/stops"
-    val effect: ZIO[Scope, BlaBlaBusApiError, List[BusStop]] = for {
-      decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
-      request = Request.get(decodedUrl).addHeaders(baseHeaders)
-      stopsResponse <- makeRequest[StopsResponse](request)
-    } yield stopsResponse.stops
-    effect.provide(ZLayer.succeed(client) ++ ZLayer.succeed(Scope.global))
+    ZIO.scoped {
+      for {
+        decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
+        request = Request.get(decodedUrl).addHeaders(baseHeaders)
+        stopsResponse <- makeRequest[StopsResponse](request)
+      } yield stopsResponse.stops
+    }.mapError {
+      case e: BlaBlaBusApiError => e
+      case e: Throwable => NetworkError(e)
+    }
   }
 
   def getFares(
