@@ -5,7 +5,6 @@ import zio.test._
 import zio.test.Assertion._
 import java.time.LocalDate
 import com.example._
-import com.example.BlaBlaBusApi._
 import com.example.Document._
 
 /** Comprehensive test suite for BlaBlaCar Bus API integration
