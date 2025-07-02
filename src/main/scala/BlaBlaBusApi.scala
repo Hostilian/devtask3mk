@@ -208,26 +208,34 @@ class BlaBlaBusApiClientImpl(
   ): Task[List[Fare]] = {
     val queryParams = buildFareQueryParams(updatedAfter)
     val url = s"${config.baseUrl}/${config.version}/fares$queryParams"
-    val effect: ZIO[Scope, BlaBlaBusApiError, List[Fare]] = for {
-      decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
-      request = Request.get(decodedUrl).addHeaders(baseHeaders)
-      faresResponse <- makeRequest[FaresResponse](request)
-    } yield faresResponse.fares
-    effect.provide(ZLayer.succeed(client) ++ ZLayer.succeed(Scope.global))
+    ZIO.scoped {
+      for {
+        decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
+        request = Request.get(decodedUrl).addHeaders(baseHeaders)
+        faresResponse <- makeRequest[FaresResponse](request)
+      } yield faresResponse.fares
+    }.mapError {
+      case e: BlaBlaBusApiError => e
+      case e: Throwable => NetworkError(e)
+    }
   }
 
   def searchRoutes(request: SearchRequest): Task[List[Trip]] = {
     val url = s"${config.baseUrl}/${config.version}/search"
     val requestBody = request.toJson
-    val effect: ZIO[Scope, BlaBlaBusApiError, List[Trip]] = for {
-      decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
-      httpRequest = Request
-        .post(decodedUrl, Body.fromString(requestBody))
-        .addHeaders(baseHeaders)
-        .addHeader(Header.ContentType(MediaType.application.json))
-      tripsResponse <- makeRequest[TripsResponse](httpRequest)
-    } yield tripsResponse.trips
-    effect.provide(ZLayer.succeed(client) ++ ZLayer.succeed(Scope.global))
+    ZIO.scoped {
+      for {
+        decodedUrl <- ZIO.fromEither(URL.decode(url)).mapError(e => BusApiParseError(s"Invalid URL: $e"))
+        httpRequest = Request
+          .post(decodedUrl, Body.fromString(requestBody))
+          .addHeaders(baseHeaders)
+          .addHeader(Header.ContentType(MediaType.application.json))
+        tripsResponse <- makeRequest[TripsResponse](httpRequest)
+      } yield tripsResponse.trips
+    }.mapError {
+      case e: BlaBlaBusApiError => e
+      case e: Throwable => NetworkError(e)
+    }
   }
 
   def searchRoutes(
