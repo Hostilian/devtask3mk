@@ -134,7 +134,7 @@ case class BlaBlaBusConfig(
 // API Errors
 sealed trait BlaBlaBusApiError extends Throwable
 case class HttpError(status: Status, message: String) extends BlaBlaBusApiError
-case class ParseError(message: String) extends BlaBlaBusApiError
+case class BusApiParseError(message: String) extends BlaBlaBusApiError
 case class NetworkError(cause: Throwable) extends BlaBlaBusApiError
 case class RateLimitError(retryAfter: Option[Duration] = None) extends BlaBlaBusApiError
 
@@ -186,9 +186,9 @@ class BlaBlaBusApiClientImpl(
         .timeout(config.timeout)
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
-      body <- response.body.asString
+      body <- response.body.asString.orDie
       stopsResponse <- ZIO.fromEither(body.fromJson[StopsResponse])
-        .mapError(ParseError.apply)
+        .mapError(BusApiParseError.apply)
     } yield stopsResponse.stops
   }
   
@@ -214,9 +214,9 @@ class BlaBlaBusApiClientImpl(
         .timeout(config.timeout)
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
-      body <- response.body.asString
+      body <- response.body.asString.orDie
       faresResponse <- ZIO.fromEither(body.fromJson[FaresResponse])
-        .mapError(ParseError.apply)
+        .mapError(BusApiParseError.apply)
     } yield faresResponse.fares
   }
   
@@ -235,9 +235,9 @@ class BlaBlaBusApiClientImpl(
         .timeout(config.timeout)
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
-      body <- response.body.asString
+      body <- response.body.asString.orDie
       tripsResponse <- ZIO.fromEither(body.fromJson[TripsResponse])
-        .mapError(ParseError.apply)
+        .mapError(BusApiParseError.apply)
     } yield tripsResponse.trips
   }
   
@@ -307,7 +307,10 @@ object BlaBlaBusDocumentProcessor {
       Leaf(s"🎯 ${stop.destinations_ids.length} destinations available")
     } else Empty
     
-    Vertical(List(header, location, coordinates, timezone, destinations).filter(_ != Empty))
+    Vertical(List(header, location, coordinates, timezone, destinations).filter {
+      case Empty() => false
+      case _ => true
+    })
   }
   
   def fareToDocument(fare: Fare): Document[String] = {
@@ -413,7 +416,7 @@ object BlaBlaBusDocumentProcessor {
           Leaf(s"❌ HTTP Error ${status.code}"),
           Leaf(message)
         ))
-      case ParseError(message) =>
+      case BusApiParseError(message) =>
         Vertical(List(
           Leaf("⚠️ Data Parsing Error"),
           Leaf(message)
@@ -437,8 +440,8 @@ object BlaBlaBusDocumentProcessor {
   
   private def formatTime(timeString: String): String = {
     try {
-      val dateTime = LocalDateTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-      dateTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+      val dateTime = LocalDateTime.parse(timeString.nn, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+      dateTime.nn.format(DateTimeFormatter.ofPattern("HH:mm"))
     } catch {
       case _: Exception => timeString.take(5) // Fallback to first 5 chars (HH:mm)
     }
@@ -561,7 +564,7 @@ class MockBlaBlaBusApiClient extends BlaBlaBusApiClient {
     val request = SearchRequest(
       origin_id = originId,
       destination_id = destinationId,
-      date = date.format(DateTimeFormatter.ISO_LOCAL_DATE),
+      date = date.nn.format(DateTimeFormatter.ISO_LOCAL_DATE),
       currency = Some(currency),
       passengers = Some(passengers),
       transfers = Some(transfers)

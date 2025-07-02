@@ -22,7 +22,7 @@ case class Empty[A]()                              extends Document[A]
 // Some error types for validation
 sealed trait DocumentError
 case object EmptyDocumentError                            extends DocumentError
-case class ParseError(message: String)                    extends DocumentError
+case class DocumentParseError(message: String)            extends DocumentError
 case class ValidationError(field: String, reason: String) extends DocumentError
 
 // Document operations
