@@ -175,26 +175,21 @@ class BlaBlaBusApiClientImpl(
     Header.Custom("Accept-Encoding", "gzip")
   )
   
-  def getStops(): Task[List[BusStop]] =
-    ZIO.scoped {
-      for {
-        response <- client
-          .request(
-            Request.get(url).addHeaders(baseHeaders)
-          )
-          .timeout(config.timeout)
-          .retry(Schedule.recurs(config.retries))
-          .catchAll(handleNetworkError)
-        actualResponse = response match {
-          case r: zio.http.Response => r
-          case Some(r: zio.http.Response) => r
-          case _ => throw BusApiParseError("Invalid response type")
-        }
-        body <- actualResponse.body.asString.orDie
-        stopsResponse <- ZIO.fromEither(body.fromJson[StopsResponse])
-          .mapError(BusApiParseError.apply)
-      } yield stopsResponse.stops
-    }.orDie
+  def getStops(): Task[List[BusStop]] = {
+    val url = s"${config.baseUrl}/${config.version}/stops"
+    for {
+      response <- client
+        .request(
+          Request.get(url).addHeaders(baseHeaders)
+        )
+        .timeout(config.timeout)
+        .retry(Schedule.recurs(config.retries))
+        .catchAll(handleNetworkError)
+      body <- response.body.asString.orDie
+      stopsResponse <- ZIO.fromEither(body.fromJson[StopsResponse])
+        .mapError(BusApiParseError.apply)
+    } yield stopsResponse.stops
+  }
 
   def getFares(
     originId: Option[Int] = None,
