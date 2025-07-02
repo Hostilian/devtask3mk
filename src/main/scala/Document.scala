@@ -111,6 +111,8 @@ object Document {
         case (Empty(), d) => d
         case (d, Empty()) => d
         case (Vertical(c1), Vertical(c2)) => Vertical(c1 ++ c2)
+        case (Vertical(c1), d2) => Vertical(c1 :+ d2)
+        case (d1, Vertical(c2)) => Vertical(d1 +: c2)
         case (d1, d2) => Vertical(List(d1, d2))
       }
     }
