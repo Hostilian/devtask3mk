@@ -56,7 +56,7 @@ object BlaBlaBusExample extends ZIOAppDefault {
     } yield ()
   }
   
-  private def demonstrateRouteSearch(): ZIO[Any, Nothing, Unit] = {
+  private def demonstrateRouteSearch(): ZIO[Any, IOException, Unit] = {
     for {
       _ <- printLine("Mock route search results:")
       _ <- printLine("Paris → Lyon:")
@@ -66,7 +66,7 @@ object BlaBlaBusExample extends ZIOAppDefault {
     } yield ()
   }
   
-  private def demonstrateTripDetails(): ZIO[Any, Nothing, Unit] = {
+  private def demonstrateTripDetails(): ZIO[Any, IOException, Unit] = {
     for {
       _ <- printLine("Mock trip details:")
       _ <- printLine("Regular trip: €25.99")
