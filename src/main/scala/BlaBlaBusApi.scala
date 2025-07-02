@@ -267,10 +267,10 @@ class BlaBlaBusApiClientImpl(
   }
 
   def getFares(
-      originId: Option[Int] = None,
-      destinationId: Option[Int] = None,
-      date: Option[LocalDate] = None,
-      currencies: List[String] = List.empty
+      originId: Option[Int],
+      destinationId: Option[Int],
+      date: Option[LocalDate],
+      currencies: List[String]
   ): Task[List[Fare]] = {
     getFares()
   }
