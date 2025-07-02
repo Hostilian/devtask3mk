@@ -355,3 +355,196 @@ By contributing to Document Matrix, you agree that your contributions will be li
 Thank you for contributing to Document Matrix! 🎉
 
 **Questions?** Feel free to ask in [GitHub Discussions](../../discussions) or create an issue.
+
+## 🚌 BlaBlaCar Bus API Integration
+
+This project is designed to work with transport APIs, particularly the BlaBlaCar Bus API. When contributing to transport-related functionality, please consider:
+
+### Transport Data Domain
+
+#### Core Data Types
+When working with transport data, follow these patterns:
+
+```scala
+// Route information
+case class BusRoute(
+  id: String,
+  origin: String,
+  destination: String,
+  departureTime: LocalDateTime,
+  arrivalTime: LocalDateTime,
+  price: BigDecimal,
+  availableSeats: Int,
+  operator: String
+)
+
+// Booking data
+case class Booking(
+  id: String,
+  route: BusRoute,
+  passengers: List[Passenger],
+  status: BookingStatus,
+  totalPrice: BigDecimal
+)
+
+// Real-time updates
+case class LiveUpdate(
+  routeId: String,
+  currentLocation: String,
+  estimatedDelay: Int,
+  lastUpdate: LocalDateTime
+)
+```
+
+#### Document Processing Patterns
+Transform transport data into documents following these conventions:
+
+```scala
+// Use emojis for visual clarity
+def routeToDocument(route: BusRoute): Document[String] = {
+  Vertical(List(
+    Leaf(s"🚌 ${route.origin} → ${route.destination}"),
+    Leaf(s"🕐 ${formatTime(route.departureTime)}"),
+    Leaf(s"💰 €${route.price}")
+  ))
+}
+
+// Handle collections with proper structure
+def searchResultsToDocument(routes: List[BusRoute]): Document[String] = {
+  val header = Leaf("🔍 Search Results")
+  val routeList = routes.zipWithIndex.map { case (route, index) =>
+    val number = Leaf(s"${index + 1}.")
+    val routeDoc = routeToDocument(route)
+    Horizontal(List(number, routeDoc))
+  }
+  
+  Vertical(List(header, Leaf("")) ++ routeList)
+}
+```
+
+### API Integration Guidelines
+
+#### Error Handling
+Create specific error types for transport API issues:
+
+```scala
+sealed trait TransportApiError extends Throwable
+case class RouteNotFoundError(routeId: String) extends TransportApiError
+case class BookingFailedError(reason: String) extends TransportApiError
+case object NetworkTimeoutError extends TransportApiError
+
+def handleTransportError(error: TransportApiError): Document[String] = {
+  error match {
+    case RouteNotFoundError(id) =>
+      Vertical(List(
+        Leaf("❌ Route Not Found"),
+        Leaf(s"Route ID: $id")
+      ))
+    // ... other cases
+  }
+}
+```
+
+#### Testing Transport Features
+When adding transport-related functionality:
+
+1. **Property-Based Testing**
+   ```scala
+   // Generator for valid routes
+   val genBusRoute: Gen[BusRoute] = for {
+     origin <- genCity
+     destination <- genCity.suchThat(_ != origin)
+     departure <- genDateTime
+     price <- Gen.choose(10.0, 100.0).map(BigDecimal(_))
+   } yield BusRoute(origin, destination, departure, price)
+   
+   property("route document always has structure") {
+     forAll(genBusRoute) { route =>
+       val doc = routeToDocument(route)
+       doc.isInstanceOf[Vertical] // Always returns Vertical layout
+     }
+   }
+   ```
+
+2. **Integration Testing**
+   ```scala
+   // Mock API responses
+   val mockApiResponse = """
+   {
+     "routes": [
+       {
+         "id": "RT123",
+         "origin": "Paris",
+         "destination": "Lyon",
+         "departure": "2024-03-15T08:30:00",
+         "price": 25.99
+       }
+     ]
+   }
+   """
+   
+   test("API response processing") {
+     val routes = parseApiResponse(mockApiResponse)
+     val doc = searchResultsToDocument(routes)
+     // Verify document structure
+   }
+   ```
+
+### Performance Considerations
+
+#### Large Dataset Processing
+For handling large transport datasets:
+
+```scala
+// Use streaming for large route collections
+import zio.stream._
+
+def processLargeRouteSet(routes: ZStream[Any, Throwable, BusRoute]): ZStream[Any, Throwable, Document[String]] = {
+  routes
+    .map(routeToDocument)
+    .grouped(100) // Process in batches
+    .map(batch => Vertical(batch.toList))
+}
+```
+
+#### Caching Strategy
+Implement caching for frequently accessed route data:
+
+```scala
+trait RouteCache[F[_]] {
+  def get(key: String): F[Option[BusRoute]]
+  def put(key: String, route: BusRoute): F[Unit]
+}
+
+def cachedRouteProcessing[F[_]: Monad](
+  routeId: String,
+  cache: RouteCache[F],
+  api: TransportApi[F]
+): F[Document[String]] = {
+  cache.get(routeId).flatMap {
+    case Some(route) => routeToDocument(route).pure[F]
+    case None => 
+      api.getRoute(routeId).flatTap(cache.put(routeId, _)).map(routeToDocument)
+  }
+}
+```
+
+### Documentation Requirements
+
+When contributing transport-related features:
+
+1. **Add examples** to the Examples wiki page
+2. **Update API documentation** with transport-specific use cases
+3. **Include performance notes** for large datasets
+4. **Document error handling** patterns
+5. **Add integration guides** for external APIs
+
+### Code Review Focus Areas
+
+For transport-related PRs, reviewers should focus on:
+
+- **Data consistency** - Ensure transport data maintains integrity
+- **Error handling** - Proper handling of API failures
+- **Performance** - Efficient processing of large datasets
+- **Documentation** - Clear examples and integration guides
+- **Testing** - Comprehensive coverage including edge cases

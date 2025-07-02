@@ -22,6 +22,7 @@ Welcome to the **Document Matrix** project wiki! This is a comprehensive Scala p
 - **[Testing Strategy](Testing-Strategy)** - Unit, property, and integration tests
 - **[CI/CD Pipeline](CI-CD-Pipeline)** - Continuous integration and deployment
 - **[Code Style](Code-Style)** - Scala coding standards and formatting
+- **[BlaBlaCar Bus API Integration](BlaBlaCar-Bus-API-Integration)** - Transport data processing guide
 
 ### Advanced Topics
 - **[Free Monads](Free-Monads)** - DSL and interpretation patterns

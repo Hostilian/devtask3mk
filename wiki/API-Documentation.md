@@ -416,3 +416,260 @@ testDoc should matchPattern {
 - **[Architecture Overview](Architecture-Overview)** - System design
 - **[Testing Strategy](Testing-Strategy)** - How to test your code
 - **[Development Guide](Development-Guide)** - Contributing guidelines
+
+## 🚌 BlaBlaCar Bus API Integration
+
+The Document Matrix system is designed to work seamlessly with transport APIs, particularly the BlaBlaCar Bus API, providing structured document processing for travel-related data.
+
+### Supported Transport Data Types
+
+#### Route Information Processing
+```scala
+// Processing bus route data
+case class BusRoute(
+  origin: String,
+  destination: String, 
+  departure: String,
+  arrival: String,
+  duration: String,
+  price: BigDecimal
+)
+
+def routeToDocument(route: BusRoute): Document[String] = {
+  val header = Leaf(s"${route.origin} → ${route.destination}")
+  val schedule = Vertical(List(
+    Leaf(s"Departure: ${route.departure}"),
+    Leaf(s"Arrival: ${route.arrival}"),
+    Leaf(s"Duration: ${route.duration}")
+  ))
+  val pricing = Leaf(s"Price: €${route.price}")
+  
+  Vertical(List(header, schedule, pricing))
+}
+```
+
+#### Booking Data Structures
+```scala
+case class PassengerInfo(
+  name: String,
+  email: String,
+  phone: String
+)
+
+case class BookingDetails(
+  bookingId: String,
+  route: BusRoute,
+  passenger: PassengerInfo,
+  seatNumber: String,
+  status: String
+)
+
+def bookingToDocument(booking: BookingDetails): Document[String] = {
+  val header = Leaf(s"Booking ${booking.bookingId}")
+  val routeDoc = routeToDocument(booking.route)
+  val passengerDoc = Vertical(List(
+    Leaf(s"Passenger: ${booking.passenger.name}"),
+    Leaf(s"Seat: ${booking.seatNumber}"),
+    Leaf(s"Status: ${booking.status}")
+  ))
+  
+  Vertical(List(header, routeDoc, passengerDoc))
+}
+```
+
+#### Real-time Updates Integration
+```scala
+case class LiveUpdate(
+  routeId: String,
+  currentLocation: String,
+  estimatedDelay: Int,
+  timestamp: String
+)
+
+def liveUpdateToDocument(update: LiveUpdate): Document[String] = {
+  val status = if (update.estimatedDelay > 0) "DELAYED" else "ON TIME"
+  val delayInfo = if (update.estimatedDelay > 0) 
+    Some(Leaf(s"Delay: ${update.estimatedDelay} minutes"))
+  else None
+  
+  val baseInfo = List(
+    Leaf(s"Route: ${update.routeId}"),
+    Leaf(s"Current Location: ${update.currentLocation}"),
+    Leaf(s"Status: $status"),
+    Leaf(s"Last Update: ${update.timestamp}")
+  )
+  
+  Vertical(baseInfo ++ delayInfo.toList)
+}
+```
+
+### API Response Processing
+
+#### JSON to Document Conversion
+```scala
+import io.circe._
+import io.circe.generic.auto._
+import io.circe.parser._
+
+def processBusApiResponse(jsonResponse: String): Either[Error, Document[String]] = {
+  for {
+    json <- parse(jsonResponse)
+    routes <- json.as[List[BusRoute]]
+  } yield {
+    val routeDocs = routes.map(routeToDocument)
+    if (routeDocs.nonEmpty) {
+      Vertical(routeDocs)
+    } else {
+      Leaf("No routes found")
+    }
+  }
+}
+```
+
+#### Error Handling for Transport APIs
+```scala
+sealed trait TransportApiError extends DocumentError
+case class ApiTimeoutError(duration: Long) extends TransportApiError
+case class RouteNotFoundError(routeId: String) extends TransportApiError
+case class BookingFailedError(reason: String) extends TransportApiError
+
+def handleTransportApiError(error: TransportApiError): Document[String] = {
+  error match {
+    case ApiTimeoutError(duration) =>
+      Leaf(s"API request timed out after ${duration}ms")
+    case RouteNotFoundError(routeId) =>
+      Leaf(s"Route $routeId not found")
+    case BookingFailedError(reason) =>
+      Vertical(List(
+        Leaf("Booking failed"),
+        Leaf(s"Reason: $reason")
+      ))
+  }
+}
+```
+
+### Geographic Data Processing
+```scala
+case class Location(
+  latitude: Double,
+  longitude: Double,
+  address: String,
+  city: String
+)
+
+case class BusStop(
+  id: String,
+  name: String,
+  location: Location,
+  amenities: List[String]
+)
+
+def busStopToDocument(stop: BusStop): Document[String] = {
+  val header = Leaf(s"🚏 ${stop.name}")
+  val location = Vertical(List(
+    Leaf(s"📍 ${stop.location.address}"),
+    Leaf(s"🏙️ ${stop.location.city}"),
+    Leaf(s"📐 ${stop.location.latitude}, ${stop.location.longitude}")
+  ))
+  val amenitiesDoc = if (stop.amenities.nonEmpty) {
+    val amenityList = stop.amenities.map(a => Leaf(s"• $a"))
+    List(Leaf("🛠️ Amenities:"), Vertical(amenityList))
+  } else {
+    List(Leaf("🛠️ No amenities available"))
+  }
+  
+  Vertical(List(header, location) ++ amenitiesDoc)
+}
+```
+
+### Integration Examples
+
+#### Complete Journey Processing
+```scala
+case class Journey(
+  routes: List[BusRoute],
+  totalDuration: String,
+  totalPrice: BigDecimal,
+  transfers: Int
+)
+
+def journeyToDocument(journey: Journey): Document[String] = {
+  val header = Leaf("🎫 Complete Journey")
+  val summary = Vertical(List(
+    Leaf(s"Total Duration: ${journey.totalDuration}"),
+    Leaf(s"Total Price: €${journey.totalPrice}"),
+    Leaf(s"Transfers: ${journey.transfers}")
+  ))
+  
+  val routesDocs = journey.routes.zipWithIndex.map { case (route, index) =>
+    val routeHeader = Leaf(s"Leg ${index + 1}:")
+    Vertical(List(routeHeader, routeToDocument(route)))
+  }
+  
+  Vertical(List(header, summary, Leaf("---"), Vertical(routesDocs)))
+}
+```
+
+#### Search Results Display
+```scala
+def searchResultsToDocument(
+  query: String,
+  results: List[BusRoute],
+  totalResults: Int
+): Document[String] = {
+  val header = Leaf(s"🔍 Search Results for '$query'")
+  val stats = Leaf(s"Found $totalResults routes (showing ${results.length})")
+  
+  val resultDocs = results.zipWithIndex.map { case (route, index) =>
+    val routeNumber = Leaf(s"${index + 1}.")
+    val routeDoc = routeToDocument(route)
+    Horizontal(List(routeNumber, routeDoc))
+  }
+  
+  if (resultDocs.nonEmpty) {
+    Vertical(List(header, stats, Leaf(""), Vertical(resultDocs)))
+  } else {
+    Vertical(List(header, Leaf("No routes found for your search.")))
+  }
+}
+```
+
+### Performance Considerations for Transport Data
+
+#### Large Dataset Processing
+```scala
+import zio.stream._
+
+def processLargeRouteDataset(
+  routes: ZStream[Any, Throwable, BusRoute]
+): ZStream[Any, Throwable, Document[String]] = {
+  routes
+    .map(routeToDocument)
+    .grouped(100) // Process in batches
+    .map(batch => Vertical(batch.toList))
+}
+```
+
+#### Caching Strategy
+```scala
+import zio._
+
+trait DocumentCache {
+  def get(key: String): Task[Option[Document[String]]]
+  def put(key: String, doc: Document[String]): Task[Unit]
+}
+
+def cachedRouteProcessing(
+  route: BusRoute,
+  cache: DocumentCache
+): Task[Document[String]] = {
+  val cacheKey = s"route-${route.origin}-${route.destination}"
+  
+  cache.get(cacheKey).flatMap {
+    case Some(cached) => ZIO.succeed(cached)
+    case None =>
+      val doc = routeToDocument(route)
+      cache.put(cacheKey, doc) *> ZIO.succeed(doc)
+  }
+}
+```

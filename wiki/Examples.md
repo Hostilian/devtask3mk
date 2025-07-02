@@ -484,3 +484,388 @@ val inefficient = doc.map(_.toIntOption).sequence
 - **[Architecture Overview](Architecture-Overview)** - System design
 - **[Testing Strategy](Testing-Strategy)** - Testing approaches
 - **[Development Guide](Development-Guide)** - Contributing guidelines
+
+## 🚌 BlaBlaCar Bus API Examples
+
+### Processing Route Information
+
+```scala
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+
+case class BusRoute(
+  id: String,
+  origin: String,
+  destination: String,
+  departureTime: LocalDateTime,
+  arrivalTime: LocalDateTime,
+  price: BigDecimal,
+  availableSeats: Int,
+  busOperator: String
+)
+
+// Transform a single route to a document
+def routeToDocument(route: BusRoute): Document[String] = {
+  val formatter = DateTimeFormatter.ofPattern("HH:mm")
+  
+  val routeHeader = Leaf(s"🚌 ${route.origin} → ${route.destination}")
+  val timing = Horizontal(List(
+    Leaf(s"🕐 ${route.departureTime.format(formatter)}"),
+    Leaf("→"),
+    Leaf(s"🕐 ${route.arrivalTime.format(formatter)}")
+  ))
+  val details = Horizontal(List(
+    Leaf(s"💰 €${route.price}"),
+    Leaf(s"🪑 ${route.availableSeats} seats"),
+    Leaf(s"🚍 ${route.busOperator}")
+  ))
+  
+  Vertical(List(routeHeader, timing, details))
+}
+
+// Example usage
+val route = BusRoute(
+  id = "RT123",
+  origin = "Paris Bercy",
+  destination = "Lyon Part-Dieu", 
+  departureTime = LocalDateTime.of(2024, 3, 15, 8, 30),
+  arrivalTime = LocalDateTime.of(2024, 3, 15, 12, 45),
+  price = BigDecimal("25.99"),
+  availableSeats = 15,
+  busOperator = "FlixBus"
+)
+
+val routeDoc = routeToDocument(route)
+// Renders as:
+// 🚌 Paris Bercy → Lyon Part-Dieu
+// 🕐 08:30 → 🕐 12:45
+// 💰 €25.99 🪑 15 seats 🚍 FlixBus
+```
+
+### Search Results Display
+
+```scala
+case class SearchQuery(
+  origin: String,
+  destination: String,
+  date: LocalDateTime,
+  passengers: Int
+)
+
+def displaySearchResults(
+  query: SearchQuery,
+  routes: List[BusRoute]
+): Document[String] = {
+  val dateFormatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
+  
+  val header = Vertical(List(
+    Leaf("🔍 BlaBlaCar Bus Search Results"),
+    Leaf(s"${query.origin} → ${query.destination}"),
+    Leaf(s"📅 ${query.date.format(dateFormatter)} • ${query.passengers} passenger(s)")
+  ))
+  
+  val separator = Leaf("─" * 50)
+  
+  if (routes.isEmpty) {
+    Vertical(List(
+      header,
+      separator,
+      Leaf("😔 No routes found for your search criteria"),
+      Leaf("Try adjusting your dates or destinations")
+    ))
+  } else {
+    val routeList = routes.zipWithIndex.map { case (route, index) =>
+      val routeNumber = Leaf(s"${index + 1}.")
+      val routeDetails = routeToDocument(route)
+      val bookButton = Leaf("🎫 [Book Now]")
+      
+      Horizontal(List(
+        routeNumber,
+        routeDetails,
+        bookButton
+      ))
+    }
+    
+    val footer = Leaf(s"📊 Found ${routes.length} route(s)")
+    
+    Vertical(List(header, separator) ++ routeList ++ List(separator, footer))
+  }
+}
+
+// Example usage
+val searchQuery = SearchQuery(
+  origin = "Paris",
+  destination = "Lyon",
+  date = LocalDateTime.of(2024, 3, 15, 0, 0),
+  passengers = 2
+)
+
+val searchResults = List(route) // Using the route from previous example
+val resultsDoc = displaySearchResults(searchQuery, searchResults)
+```
+
+### Booking Confirmation
+
+```scala
+case class Passenger(
+  firstName: String,
+  lastName: String,
+  email: String,
+  phone: String
+)
+
+case class Booking(
+  confirmationNumber: String,
+  route: BusRoute,
+  passengers: List[Passenger],
+  totalPrice: BigDecimal,
+  bookingDate: LocalDateTime,
+  paymentStatus: String
+)
+
+def createBookingConfirmation(booking: Booking): Document[String] = {
+  val header = Vertical(List(
+    Leaf("✅ Booking Confirmed"),
+    Leaf(s"Confirmation #${booking.confirmationNumber}")
+  ))
+  
+  val routeInfo = Vertical(List(
+    Leaf("🚌 Trip Details:"),
+    routeToDocument(booking.route)
+  ))
+  
+  val passengerInfo = Vertical(List(
+    Leaf("👥 Passengers:"),
+    Vertical(booking.passengers.map { passenger =>
+      Leaf(s"• ${passenger.firstName} ${passenger.lastName}")
+    })
+  ))
+  
+  val paymentInfo = Horizontal(List(
+    Leaf(s"💳 Total: €${booking.totalPrice}"),
+    Leaf(s"Status: ${booking.paymentStatus}")
+  ))
+  
+  val instructions = Vertical(List(
+    Leaf("📋 Important Information:"),
+    Leaf("• Arrive at the station 15 minutes before departure"),
+    Leaf("• Bring a valid ID document"),
+    Leaf("• Check your email for your e-ticket"),
+    Leaf("• Contact support: support@blablacar.com")
+  ))
+  
+  Vertical(List(
+    header,
+    Leaf(""),
+    routeInfo,
+    Leaf(""),
+    passengerInfo,
+    Leaf(""),
+    paymentInfo,
+    Leaf(""),
+    instructions
+  ))
+}
+
+// Example usage
+val passenger = Passenger("John", "Doe", "john.doe@email.com", "+33123456789")
+val booking = Booking(
+  confirmationNumber = "BBC123456789",
+  route = route,
+  passengers = List(passenger),
+  totalPrice = BigDecimal("25.99"),
+  bookingDate = LocalDateTime.now(),
+  paymentStatus = "Paid"
+)
+
+val confirmationDoc = createBookingConfirmation(booking)
+```
+
+### Real-time Updates Dashboard
+
+```scala
+case class LiveStatus(
+  routeId: String,
+  currentLocation: String,
+  estimatedArrival: LocalDateTime,
+  delay: Int, // minutes
+  nextStop: String,
+  occupancyLevel: String
+)
+
+def createLiveUpdateDocument(updates: List[LiveStatus]): Document[String] = {
+  val header = Vertical(List(
+    Leaf("📡 Live Bus Tracking"),
+    Leaf(s"Last updated: ${LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss"))}")
+  ))
+  
+  val statusList = updates.map { status =>
+    val statusIcon = status.delay match {
+      case d if d <= 0 => "🟢"
+      case d if d <= 5 => "🟡" 
+      case _ => "🔴"
+    }
+    
+    val delayText = if (status.delay > 0) s" (+${status.delay}min)" else " (On time)"
+    val occupancyIcon = status.occupancyLevel match {
+      case "Low" => "🟢"
+      case "Medium" => "🟡"
+      case "High" => "🔴"
+      case _ => "⚪"
+    }
+    
+    Vertical(List(
+      Horizontal(List(
+        Leaf(statusIcon),
+        Leaf(s"Route ${status.routeId}$delayText")
+      )),
+      Leaf(s"📍 Currently at: ${status.currentLocation}"),
+      Leaf(s"🎯 Next stop: ${status.nextStop}"),
+      Horizontal(List(
+        Leaf(s"🕐 ETA: ${status.estimatedArrival.format(DateTimeFormatter.ofPattern("HH:mm"))}"),
+        Leaf(occupancyIcon),
+        Leaf(s"${status.occupancyLevel} occupancy")
+      ))
+    ))
+  }
+  
+  if (statusList.isEmpty) {
+    Vertical(List(
+      header,
+      Leaf(""),
+      Leaf("📭 No live updates available")
+    ))
+  } else {
+    Vertical(List(header, Leaf("")) ++ statusList.flatMap(doc => List(doc, Leaf("─" * 30))))
+  }
+}
+
+// Example usage
+val liveUpdates = List(
+  LiveStatus("RT123", "Highway A6 - Fontainebleau", 
+    LocalDateTime.now().plusMinutes(45), 3, "Lyon Part-Dieu", "Medium"),
+  LiveStatus("RT456", "Mâcon Station", 
+    LocalDateTime.now().plusMinutes(120), 0, "Lyon Perrache", "Low")
+)
+
+val dashboardDoc = createLiveUpdateDocument(liveUpdates)
+```
+
+### Error Handling Examples
+
+```scala
+sealed trait BusApiError
+case class RouteNotFoundError(routeId: String) extends BusApiError
+case class BookingFailedError(reason: String, code: Int) extends BusApiError
+case class PaymentDeclinedError(transactionId: String) extends BusApiError
+case object NetworkTimeoutError extends BusApiError
+
+def handleBusApiError(error: BusApiError): Document[String] = {
+  error match {
+    case RouteNotFoundError(routeId) =>
+      Vertical(List(
+        Leaf("❌ Route Not Found"),
+        Leaf(s"Route ID: $routeId"),
+        Leaf("Please check your route details and try again.")
+      ))
+      
+    case BookingFailedError(reason, code) =>
+      Vertical(List(
+        Leaf("⚠️ Booking Failed"),
+        Leaf(s"Error Code: $code"),
+        Leaf(s"Reason: $reason"),
+        Leaf("Please contact customer support if the problem persists.")
+      ))
+      
+    case PaymentDeclinedError(transactionId) =>
+      Vertical(List(
+        Leaf("💳 Payment Declined"),
+        Leaf(s"Transaction ID: $transactionId"),
+        Leaf("Please check your payment method and try again."),
+        Leaf("Contact your bank if the issue continues.")
+      ))
+      
+    case NetworkTimeoutError =>
+      Vertical(List(
+        Leaf("🌐 Connection Timeout"),
+        Leaf("Unable to reach BlaBlaCar servers."),
+        Leaf("Please check your internet connection and try again.")
+      ))
+  }
+}
+
+// Usage in error scenarios
+val errorDoc = handleBusApiError(RouteNotFoundError("RT999"))
+```
+
+### Multi-leg Journey Planning
+
+```scala
+case class JourneyLeg(
+  route: BusRoute,
+  transferTime: Option[Int] = None // minutes
+)
+
+case class CompleteJourney(
+  legs: List[JourneyLeg],
+  totalDuration: Int, // minutes
+  totalPrice: BigDecimal,
+  totalDistance: Int // kilometers
+)
+
+def displayCompleteJourney(journey: CompleteJourney): Document[String] = {
+  val header = Leaf("🗺️ Complete Journey Plan")
+  
+  val summary = Horizontal(List(
+    Leaf(s"⏱️ ${journey.totalDuration / 60}h ${journey.totalDuration % 60}m"),
+    Leaf(s"💰 €${journey.totalPrice}"),
+    Leaf(s"📏 ${journey.totalDistance}km")
+  ))
+  
+  val legDocuments = journey.legs.zipWithIndex.map { case (leg, index) =>
+    val legHeader = Leaf(s"Leg ${index + 1}:")
+    val routeDoc = routeToDocument(leg.route)
+    
+    val transferInfo = leg.transferTime match {
+      case Some(minutes) if index < journey.legs.length - 1 =>
+        List(Leaf(s"🔄 Transfer time: ${minutes} minutes"))
+      case _ => List.empty
+    }
+    
+    Vertical(List(legHeader, routeDoc) ++ transferInfo)
+  }
+  
+  val tips = Vertical(List(
+    Leaf("💡 Journey Tips:"),
+    Leaf("• Allow extra time for transfers"),
+    Leaf("• Keep your tickets handy"),
+    Leaf("• Check platform information at each station")
+  ))
+  
+  Vertical(List(
+    header,
+    summary,
+    Leaf(""),
+    Vertical(legDocuments.flatMap(doc => List(doc, Leaf("")))),
+    tips
+  ))
+}
+
+// Example multi-leg journey
+val leg1 = JourneyLeg(
+  route = route.copy(destination = "Dijon"),
+  transferTime = Some(30)
+)
+val leg2 = JourneyLeg(
+  route = route.copy(origin = "Dijon", departureTime = route.arrivalTime.plusMinutes(30))
+)
+
+val completeJourney = CompleteJourney(
+  legs = List(leg1, leg2),
+  totalDuration = 300, // 5 hours
+  totalPrice = BigDecimal("45.99"),
+  totalDistance = 450
+)
+
+val journeyDoc = displayCompleteJourney(completeJourney)
+```

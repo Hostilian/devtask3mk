@@ -5,7 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Docker](https://img.shields.io/badge/docker-supported-blue.svg)](https://www.docker.com/)
 
-A comprehensive Scala 3 project demonstrating advanced functional programming concepts through a document data structure library. Features algebraic data types, type classes, free monads, tagless final pattern, and property-based testing.
+A comprehensive Scala 3 project demonstrating advanced functional programming concepts through a document data structure library. Features algebraic data types, type classes, free monads, tagless final pattern, and property-based testing. **Designed for transport data processing and integration with APIs like BlaBlaCar Bus API.**
 
 ## ✨ Features
 
@@ -17,7 +17,9 @@ A comprehensive Scala 3 project demonstrating advanced functional programming co
 - 🎭 **Tagless Final** - Modern functional architecture approach
 - 🔧 **Optics** - Lens/Prism operations with Monocle
 - 🌐 **HTTP API** - RESTful web service with Http4s and ZIO
-- 📦 **Docker Support** - Containerized deployment ready
+- � **Transport API Integration** - Designed for BlaBlaCar Bus API and travel data processing
+- 📊 **Data Processing** - Route information, booking data, and real-time updates
+- �📦 **Docker Support** - Containerized deployment ready
 - ⚙️ **CI/CD Pipeline** - Automated testing, formatting, and deployment
 
 ## 🚀 Quick Start
@@ -76,6 +78,21 @@ val doc2 = Vertical(List(Leaf("C"), Leaf("D")))
 val mapped = doc1.map(_.toLowerCase)
 val combined = doc1 |+| doc2
 val folded = Document.fold(combined)(_ => 1)(_.sum)(_.sum)
+
+// BlaBlaCar Bus API Integration Example
+case class BusRoute(origin: String, destination: String, price: BigDecimal)
+
+def routeToDocument(route: BusRoute): Document[String] = {
+  Vertical(List(
+    Leaf(s"🚌 ${route.origin} → ${route.destination}"),
+    Leaf(s"💰 €${route.price}")
+  ))
+}
+
+val busRoute = BusRoute("Paris", "Lyon", BigDecimal("25.99"))
+val routeDoc = routeToDocument(busRoute)
+// Result: 🚌 Paris → Lyon
+//         💰 €25.99
 
 // HTTP API
 POST /render
@@ -208,6 +225,34 @@ val layout = Vertical(List(
   Leaf("Main Content"),
   Horizontal(List(Leaf("Footer Left"), Leaf("Footer Right")))
 ))
+```
+
+### Transport Data Processing
+```scala
+// BlaBlaCar Bus route processing
+case class BusRoute(origin: String, destination: String, departure: String, price: BigDecimal)
+
+val routes = List(
+  BusRoute("Paris", "Lyon", "08:30", BigDecimal("25.99")),
+  BusRoute("Paris", "Lyon", "14:30", BigDecimal("28.99"))
+)
+
+def displaySearchResults(routes: List[BusRoute]): Document[String] = {
+  val header = Leaf("🔍 Available Routes")
+  val routeList = routes.map { route =>
+    Vertical(List(
+      Leaf(s"🚌 ${route.origin} → ${route.destination}"),
+      Horizontal(List(
+        Leaf(s"🕐 ${route.departure}"),
+        Leaf(s"💰 €${route.price}")
+      ))
+    ))
+  }
+  
+  Vertical(List(header) ++ routeList)
+}
+
+val searchResults = displaySearchResults(routes)
 ```
 
 ### Functional Transformations
