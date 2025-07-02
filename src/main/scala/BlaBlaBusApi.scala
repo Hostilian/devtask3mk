@@ -218,29 +218,25 @@ class BlaBlaBusApiClientImpl(
     } yield faresResponse.fares
   }
 
-  def searchRoutes(request: SearchRequest): Task[List[Trip]] =
-    ZIO.scoped {
-      for {
-        response <- client
-          .request(
-            Request
-              .post(url, Body.fromString(requestBody))
-              .addHeaders(baseHeaders)
-              .addHeader(Header.ContentType(MediaType.application.json))
-          )
-          .timeout(config.timeout)
-          .retry(Schedule.recurs(config.retries))
-          .catchAll(handleNetworkError)
-        actualResponse = response match {
-          case r: zio.http.Response => r
-          case Some(r: zio.http.Response) => r
-          case _ => throw BusApiParseError("Invalid response type")
-        }
-        body <- actualResponse.body.asString.orDie
-        tripsResponse <- ZIO.fromEither(body.fromJson[TripsResponse])
-          .mapError(BusApiParseError.apply)
-      } yield tripsResponse.trips
-    }.orDie
+  def searchRoutes(request: SearchRequest): Task[List[Trip]] = {
+    val url = s"${config.baseUrl}/${config.version}/search"
+    val requestBody = request.toJson
+    for {
+      response <- client
+        .request(
+          Request
+            .post(url, Body.fromString(requestBody))
+            .addHeaders(baseHeaders)
+            .addHeader(Header.ContentType(MediaType.application.json))
+        )
+        .timeout(config.timeout)
+        .retry(Schedule.recurs(config.retries))
+        .catchAll(handleNetworkError)
+      body <- response.body.asString.orDie
+      tripsResponse <- ZIO.fromEither(body.fromJson[TripsResponse])
+        .mapError(BusApiParseError.apply)
+    } yield tripsResponse.trips
+  }
 
   def searchRoutes(
     originId: Int,
@@ -359,7 +355,7 @@ object BlaBlaBusDocumentProcessor {
     ).flatten
     val featuresDoc: List[Document[String]] =
       if (features.nonEmpty) List(Leaf(features.mkString(" \u2022 "))) else List.empty
-    Vertical(List(header, pricing, timing, availability).map(_.asInstanceOf[Document[String]]) ++ featuresDoc.asInstanceOf[List[Document[String]]])
+    Vertical(List(header, pricing, timing, availability) ++ featuresDoc)
   }
   def searchResultsToDocument(
     originId: Int,
@@ -420,8 +416,8 @@ object BlaBlaBusDocumentProcessor {
   }
   private def formatTime(timeString: String): String = {
     try {
-      val dateTime = Option(LocalDateTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)).orNull
-      if (dateTime != null) dateTime.format(DateTimeFormatter.ofPattern("HH:mm")).nn else timeString.take(5)
+      val dateTime = LocalDateTime.parse(timeString, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+      Option(dateTime).map(_.format(DateTimeFormatter.ofPattern("HH:mm"))).getOrElse(timeString.take(5))
     } catch {
       case _: Exception => timeString.take(5)
     }
