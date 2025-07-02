@@ -24,7 +24,7 @@ A comprehensive Scala 3 project demonstrating advanced functional programming co
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Prerequisitess
 - Java 21+
 - SBT 1.11.0+
 
