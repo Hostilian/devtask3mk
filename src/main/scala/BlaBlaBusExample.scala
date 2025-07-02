@@ -1,11 +1,13 @@
-package com.examplepackage com.example
-
-
+package com.example
 
 import zio._
 import zio.Console._
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import scala.language.unsafeNulls
+
+// Import the BlaBlaCar API types and client
+import com.example.BlaBlaBusApi._
 
 /**
  * Comprehensive example application demonstrating BlaBlaCar Bus API integration

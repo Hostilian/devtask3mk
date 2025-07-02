@@ -16,7 +16,6 @@ jobs:
   update-wiki:
     name: Update GitHub Wiki
     runs-on: ubuntu-latest
-    if: github.repository_owner == 'Hostilian'
     
     steps:
       - name: Checkout repository
@@ -30,6 +29,41 @@ jobs:
           repository: ${{ github.repository }}.wiki
           path: wiki-repo
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Update Wiki
+        run: |
+          # Check if there are any documentation changes
+          if git diff --name-only HEAD~1 | grep -E '\.(md|rst|txt)$'; then
+            echo "Documentation changes detected"
+            # Copy documentation files to wiki
+            cp -r docs/* wiki-repo/ 2>/dev/null || true
+            cp README.md wiki-repo/Home.md 2>/dev/null || true
+            
+            # Commit and push wiki changes
+            cd wiki-repo
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git add .
+            if ! git diff --staged --quiet; then
+              git commit -m "Auto-update wiki from main branch"
+              git push
+              echo "Wiki updated successfully"
+            else
+              echo "No wiki changes to commit"
+            fi
+          else
+            echo "No documentation changes detected"
+          fi
+          
+      - name: Notify completion
+        if: success()
+        run: |
+          echo "Wiki update process completed"
 
       - name: Update wiki pages
         run: |

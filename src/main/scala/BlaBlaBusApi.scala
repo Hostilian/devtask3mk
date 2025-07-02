@@ -1,7 +1,5 @@
 package com.example
 
-
-
 import zio._
 import zio.http._
 import zio.json._
