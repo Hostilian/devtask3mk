@@ -1,7 +1,7 @@
 package com.example
 
 import cats.syntax.semigroupk._ // for <+>
-import com.example.Document._ // for Vertical, prettyPrint, etc.
+import com.example.Document._   // for Vertical, prettyPrint, etc.
 import org.http4s.QueryParamDecoder
 import org.http4s.ParseFailure
 import com.comcast.ip4s.Host
@@ -26,13 +26,19 @@ import scala.util.Try
 // Implicit decoder for LocalDate query params
 implicit val localDateQueryParamDecoder: QueryParamDecoder[LocalDate] =
   QueryParamDecoder[String].emap { str =>
+<<<<<<< HEAD
     Try(LocalDate.parse(str)).toEither.left.map(t => ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error")))
+=======
+    Try(LocalDate.parse(str)).toEither.left.map(t =>
+      ParseFailure("Invalid date", Option(t.getMessage).getOrElse("Parse error").nn)
+    )
+>>>>>>> c30259bc2023f1473a989697c2958a6f739fd5b3
   }
 object DateParam extends org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher[LocalDate]("date")
 
 // Query parameter extractors (move outside Server object to avoid cyclic reference)
 import org.http4s.dsl.impl.{QueryParamDecoderMatcher, OptionalQueryParamDecoderMatcher}
-object OriginParam extends QueryParamDecoderMatcher[Int]("origin")
+object OriginParam      extends QueryParamDecoderMatcher[Int]("origin")
 object DestinationParam extends QueryParamDecoderMatcher[Int]("destination")
 
 object Server {
@@ -148,7 +154,10 @@ object Server {
         )
       )
       val resultsDoc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
-        origin, destination, searchDate, mockTrips
+        origin,
+        destination,
+        searchDate,
+        mockTrips
       )
       Ok(Cli.prettyPrint(resultsDoc))
   }
