@@ -5,6 +5,6 @@ package com.example
 
 object BlaBlaBusApiSimple {
   // Simple/mock API client for easy use in tests or demos
-  val layer = BlaBlaBusApiClient.test
+  val layer = BlaBlaBusApiClient.mockLayer
   def client: BlaBlaBusApiClient = new MockBlaBlaBusApiClient()
 }

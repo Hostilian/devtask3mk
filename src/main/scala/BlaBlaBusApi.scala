@@ -161,8 +161,8 @@ class BlaBlaBusApiClientImpl(
   import BlaBlaBusCodecs.given
 
   private val baseHeaders = Headers(
-    Header("Authorization", s"Token token=${config.apiKey}"),
-    Header("Accept", "application/json")
+    "Authorization" -> s"Token token=${config.apiKey}",
+    "Accept" -> "application/json"
   )
 
   private def makeRequest[T: JsonDecoder](request: Request): Task[T] =
@@ -173,7 +173,7 @@ class BlaBlaBusApiClientImpl(
         .retry(Schedule.recurs(config.retries))
         .catchAll(handleNetworkError)
         .flatMap { response =>
-          response.body.asString.orDie.flatMap { body =>
+          response.body.asString.flatMap { body =>
             ZIO.fromEither(body.fromJson[T])
               .mapError(BusApiParseError.apply)
           }
@@ -242,36 +242,36 @@ object BlaBlaBusDocumentProcessor {
   import Document._
   def stopToDocument(stop: BusStop): Document[String] = {
     Vertical(List(
-      Horizontal(List(Text("Stop ID:"), Text(stop.id.toString))),
-      Horizontal(List(Text("Name:"), Text(stop.long_name))),
-      Horizontal(List(Text("Address:"), Text(stop.address.getOrElse("N/A")))),
-      Horizontal(List(Text("Timezone:"), Text(stop.time_zone)))
+      Horizontal(List(Leaf("Stop ID:"), Leaf(stop.id.toString))),
+      Horizontal(List(Leaf("Name:"), Leaf(stop.long_name))),
+      Horizontal(List(Leaf("Address:"), Leaf(stop.address.getOrElse("N/A")))),
+      Horizontal(List(Leaf("Timezone:"), Leaf(stop.time_zone)))
     ))
   }
 
   def fareToDocument(fare: Fare): Document[String] = {
     Vertical(List(
-      Horizontal(List(Text("Fare ID:"), Text(fare.id.toString))),
-      Horizontal(List(Text("From:"), Text(fare.origin_id.toString))),
-      Horizontal(List(Text("To:"), Text(fare.destination_id.toString))),
-      Horizontal(List(Text("Price:"), Text(s"${fare.price_cents / 100.0} ${fare.price_currency}")))
+      Horizontal(List(Leaf("Fare ID:"), Leaf(fare.id.toString))),
+      Horizontal(List(Leaf("From:"), Leaf(fare.origin_id.toString))),
+      Horizontal(List(Leaf("To:"), Leaf(fare.destination_id.toString))),
+      Horizontal(List(Leaf(s"Price:"), Leaf(s"${fare.price_cents / 100.0} ${fare.price_currency}")))
     ))
   }
 
   def tripToDocument(trip: Trip): Document[String] = {
     Vertical(List(
-      Horizontal(List(Text("Trip ID:"), Text(trip.id))),
-      Horizontal(List(Text("From:"), Text(trip.origin_id.toString))),
-      Horizontal(List(Text("To:"), Text(trip.destination_id.toString))),
-      Horizontal(List(Text("Departure:"), Text(trip.departure))),
-      Horizontal(List(Text("Arrival:"), Text(trip.arrival))),
-      Horizontal(List(Text("Price:"), Text(s"${trip.price_cents / 100.0} ${trip.price_currency}")))
+      Horizontal(List(Leaf("Trip ID:"), Leaf(trip.id))),
+      Horizontal(List(Leaf("From:"), Leaf(trip.origin_id.toString))),
+      Horizontal(List(Leaf("To:"), Leaf(trip.destination_id.toString))),
+      Horizontal(List(Leaf("Departure:"), Leaf(trip.departure))),
+      Horizontal(List(Leaf("Arrival:"), Leaf(trip.arrival))),
+      Horizontal(List(Leaf("Price:"), Leaf(s"${trip.price_cents / 100.0} ${trip.price_currency}")))
     ))
   }
 
   def searchResultsToDocument(origin: Int, destination: Int, date: LocalDate, trips: List[Trip]): Document[String] = {
     val header = Horizontal(List(
-      Text(s"Search Results for $origin to $destination on $date")
+      Leaf(s"Search Results for $origin to $destination on $date")
     ))
     val tripsDocs = trips.map(tripToDocument)
     Vertical(header :: tripsDocs)
