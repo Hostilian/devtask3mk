@@ -53,13 +53,14 @@ object Server {
           case Right(request) =>
             Try(LocalDate.parse(request.date)) match {
               case scala.util.Success(parsedDate) =>
+                val safeDate = Option(parsedDate).getOrElse(LocalDate.now())
                 val mockTrips = List(
                   Trip(
                     id = "demo-trip-1",
                     origin_id = request.origin_id,
                     destination_id = request.destination_id,
-                    departure = s"${parsedDate}T08:30:00+01:00",
-                    arrival = s"${parsedDate}T12:45:00+01:00",
+                    departure = s"${safeDate}T08:30:00+01:00",
+                    arrival = s"${safeDate}T12:45:00+01:00",
                     available = true,
                     price_cents = 2599,
                     price_currency = "EUR",
@@ -70,7 +71,7 @@ object Server {
                 val doc = BlaBlaBusDocumentProcessor.searchResultsToDocument(
                   request.origin_id,
                   request.destination_id,
-                  parsedDate,
+                  safeDate,
                   mockTrips
                 )
                 Ok(Cli.prettyPrint(doc))
@@ -131,7 +132,7 @@ object Server {
     // Quick search with query parameters
     case GET -> Root / "api" / "bus" / "quick-search" :?
         OriginParam(origin) +& DestinationParam(destination) +& DateParam(date) =>
-      val searchDate = date.getOrElse(LocalDate.now().plusDays(1))
+      val searchDate = date.getOrElse(LocalDate.now().nn.plusDays(1))
       val mockTrips = List(
         Trip(
           id = s"quick-${origin}-${destination}",
@@ -150,18 +151,6 @@ object Server {
         origin, destination, searchDate, mockTrips
       )
       Ok(Cli.prettyPrint(resultsDoc))
-
-    // New API version search route
-    case Method.GET -> !! / "api" / "v1" / "search" :? from(from) +& to(to) +& date(dateStr) =>
-      val date = LocalDate.parse(dateStr.nn)
-      val searchRequest = SearchRequest(
-        from = from.nn,
-        to = to.nn,
-        date = date
-      )
-      blaBlaBusApi.searchRoutes(searchRequest).map(trips => Response.json(trips.toJson)).catchAll {
-        case _: Throwable => InternalServerError("Error processing request")
-      }
   }
 
   val routes: HttpRoutes[Task] = HttpRoutes.of[Task] {
