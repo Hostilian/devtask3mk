@@ -5,6 +5,8 @@ import zio.test._
 import zio.test.Assertion._
 import java.time.{LocalDate, LocalDateTime}
 import com.example.BlaBlaBusDocumentProcessor
+import com.example.BusStop
+import com.example.Trip
 
 /** Test suite for BlaBlaCar Bus API document rendering using real data models. */
 object BlaBlaBusApiSpec extends ZIOSpecDefault {
@@ -23,6 +25,8 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
           available = true,
           price_cents = 2599,
           price_currency = "EUR",
+          is_promo = Some(false),
+          is_refundable = Some(true),
           legs = List.empty,
           passengers = List.empty
         )
@@ -70,21 +74,20 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
     },
     test("stopToDocument renders stop details correctly") {
       val stop = BusStop(
-        id = 1,
+        id = 42,
         short_name = "Paris Bercy",
-        long_name = "Paris Bercy Station",
+        long_name = "Paris Bercy Seine Bus Station",
         time_zone = "Europe/Paris",
-        latitude = Some(48.838424),
-        longitude = Some(2.382411),
-        destinations_ids = List(2, 3),
-        address = Some("48 bis Boulevard de Bercy 75012 Paris")
+        latitude = Some(48.8352)
       )
       val doc = BlaBlaBusDocumentProcessor.stopToDocument(stop)
       val content = doc.prettyPrint
       assertTrue(
-        content.contains("Paris Bercy"),
-        content.contains("Paris Bercy Station"),
-        content.contains("Europe/Paris")
+        content.contains("Stop ID: | 42"),
+        content.contains("Short Name: | Paris Bercy"),
+        content.contains("Long Name: | Paris Bercy Seine Bus Station"),
+        content.contains("Time Zone: | Europe/Paris"),
+        content.contains("Latitude: | 48.8352")
       )
     }
   )
