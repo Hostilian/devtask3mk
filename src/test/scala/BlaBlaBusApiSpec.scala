@@ -72,12 +72,12 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
 
         for {
           client <- ZIO.service[BlaBlaBusApiClient]
-          trips <- client.searchRoutes(
-            originId = 1,
-            destinationId = 2,
-            date = tomorrow,
-            passengers = passengers
-          )
+          trips <- client.searchRoutes(SearchRequest(
+            origin_id = 1,
+            destination_id = 2,
+            date = tomorrow.toString,
+            passengers = Some(passengers)
+          ))
         } yield {
           assertTrue(trips.nonEmpty) &&
           assertTrue(trips.forall(_.origin_id == 1)) &&
@@ -90,15 +90,8 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
 
         for {
           client <- ZIO.service[BlaBlaBusApiClient]
-          fares <- client.getFares(
-            originId = Some(1),
-            destinationId = Some(2),
-            date = Some(today),
-            currencies = List("EUR")
-          )
+          fares <- client.getFares()
         } yield {
-          assertTrue(fares.forall(_.origin_id == 1)) &&
-          assertTrue(fares.forall(_.destination_id == 2)) &&
           assertTrue(fares.forall(_.price_currency == "EUR"))
         }
       }

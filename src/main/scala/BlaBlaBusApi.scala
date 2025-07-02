@@ -305,6 +305,33 @@ object BlaBlaBusDocumentProcessor {
     val tripsDocs                = trips.map(tripToDocument)
     Vertical(header :: tripsDocs)
   }
+
+  def errorToDocument(error: BlaBlaBusApiError): Document[String] = {
+    error match {
+      case HttpError(status, message) => 
+        Vertical(List(
+          Leaf(s"❌ HTTP Error ${status.code}"),
+          Leaf(message)
+        ))
+      case NetworkError(cause) =>
+        Vertical(List(
+          Leaf("🌐 Network Error"),
+          Leaf("Check your internet connection"),
+          Leaf(cause.getMessage)
+        ))
+      case RateLimitError(retryAfter) =>
+        val retryMsg = retryAfter.map(d => s"Retry after ${d.toMinutes} minutes").getOrElse("Try again later")
+        Vertical(List(
+          Leaf("⏱️ Rate Limit Exceeded"),
+          Leaf(retryMsg)
+        ))
+      case BusApiParseError(message) =>
+        Vertical(List(
+          Leaf("🔧 Parse Error"),
+          Leaf(message)
+        ))
+    }
+  }
 }
 
 // ZIO Layer for dependency injection
@@ -319,6 +346,8 @@ object BlaBlaBusApiClient {
 
   val mockLayer: ZLayer[Any, Nothing, BlaBlaBusApiClient] =
     ZLayer.succeed(new MockBlaBlaBusApiClient)
+    
+  val test: ZLayer[Any, Nothing, BlaBlaBusApiClient] = mockLayer
 }
 
 // Mock implementation for testing
