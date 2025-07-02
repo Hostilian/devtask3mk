@@ -31,12 +31,12 @@ object Cli {
   def prettyPrint[A](doc: Document[A], indent: Int = 0): String = {
     val spaces = "  " * indent
     doc match {
-      case Leaf(value) => s"${spaces}📄 $value"
+      case Leaf(value) => s"${spaces}Leaf($value)"
       case Horizontal(cells) =>
-        s"${spaces}↔️ Horizontal:\n${cells.map(prettyPrint(_, indent + 1)).mkString("\n")}"
+        s"${spaces}Horizontal:\n${cells.map(prettyPrint(_, indent + 1)).mkString("\n")}"
       case Vertical(cells) =>
-        s"${spaces}↕️ Vertical:\n${cells.map(prettyPrint(_, indent + 1)).mkString("\n")}"
-      case Empty() => s"${spaces}🕳️ Empty"
+        s"${spaces}Vertical:\n${cells.map(prettyPrint(_, indent + 1)).mkString("\n")}"
+      case Empty() => s"${spaces}Empty"
     }
   }
 
