@@ -47,7 +47,7 @@ object BlaBlaBusExample extends ZIOAppDefault {
     program
   }
   
-  private def demonstrateStops(): ZIO[Any, Nothing, Unit] = {
+  private def demonstrateStops(): ZIO[Any, IOException, Unit] = {
     for {
       _ <- printLine("Mock bus stops:")
       _ <- printLine("1. Paris Bercy - Main station in central Paris")
