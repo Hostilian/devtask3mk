@@ -104,7 +104,7 @@ The pipeline now automatically formats code instead of just failing on formattin
 ### Multi-Stage Dockerfile
 ```dockerfile
 # Builder stage for compilation
-FROM sbtscala/scala-sbt:openjdk-21_1.9.7_3.4.3 AS builder
+FROM sbtscala/scala-sbt:openjdk-21_1.8.0_3.4.3 AS builder
 # Runtime stage for minimal final image
 FROM eclipse-temurin:21-jre-alpine AS runtime
 ```
