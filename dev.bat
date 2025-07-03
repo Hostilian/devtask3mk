@@ -113,7 +113,7 @@ call :header "Running Tests"
 sbt test >nul 2>&1
 if %errorlevel% neq 0 (
     call :log "Running tests in Docker..."
-    docker run --rm -v "%cd%":/app -w /app sbtscala/scala-sbt:1.11.0-scala3.4.3-openjdk-21 sbt test
+    docker run --rm -v "%cd%":/app -w /app sbtscala/scala-sbt:1.11.0-openjdk-21 sbt test
 ) else (
     call :log "Running SBT tests..."
     sbt test
@@ -128,7 +128,7 @@ call :header "Formatting Code"
 sbt scalafmtAll >nul 2>&1
 if %errorlevel% neq 0 (
     call :log "Running scalafmt in Docker..."
-    docker run --rm -v "%cd%":/app -w /app sbtscala/scala-sbt:1.11.0-scala3.4.3-openjdk-21 sbt scalafmtAll
+    docker run --rm -v "%cd%":/app -w /app sbtscala/scala-sbt:1.11.0-openjdk-21 sbt scalafmtAll
 ) else (
     call :log "Running scalafmt..."
     sbt scalafmtAll
@@ -168,7 +168,7 @@ call :format
 call :log "Step 2: Compile..."
 sbt compile >nul 2>&1
 if %errorlevel% neq 0 (
-    docker run --rm -v "%cd%":/app -w /app sbtscala/scala-sbt:1.11.0-scala3.4.3-openjdk-21 sbt compile
+    docker run --rm -v "%cd%":/app -w /app sbtscala/scala-sbt:1.11.0-openjdk-21 sbt compile
 ) else (
     sbt compile
 )
