@@ -77,8 +77,24 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         id = 42,
         short_name = "Paris Bercy",
         long_name = "Paris Bercy Seine Bus Station",
+        short_name_de = None,
+        short_name_en = None,
+        short_name_fr = None,
+        short_name_it = None,
+        short_name_nl = None,
+        long_name_de = None,
+        long_name_en = None,
+        long_name_fr = None,
+        long_name_it = None,
+        long_name_nl = None,
         time_zone = "Europe/Paris",
-        latitude = Some(48.8352)
+        latitude = Some(48.8352),
+        longitude = Some(2.3768),
+        destinations_ids = List.empty,
+        is_meta_gare = None,
+        address = None,
+        stops = None,
+        _carrier_id = None
       )
       val doc     = BlaBlaBusDocumentProcessor.stopToDocument(stop)
       val content = doc.prettyPrint
