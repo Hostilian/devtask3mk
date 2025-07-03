@@ -22,7 +22,7 @@ case class Empty[A]()                              extends Document[A]
 // Some error types for validation
 sealed trait DocumentError
 case object EmptyDocumentError                            extends DocumentError
-case class ParseError(message: String)                    extends DocumentError
+case class DocumentParseError(message: String)            extends DocumentError
 case class ValidationError(field: String, reason: String) extends DocumentError
 
 // Document operations
@@ -106,16 +106,16 @@ object Document {
 
   // Semigroup and Monoid - for combining documents
   implicit def semigroup[A]: cats.Semigroup[Document[A]] = new cats.Semigroup[Document[A]] {
-    def combine(x: Document[A], y: Document[A]): Document[A] = (x, y) match {
-      case (Empty(), d)                     => d
-      case (d, Empty())                     => d
-      case (Horizontal(c1), Horizontal(c2)) => Horizontal(c1 ++ c2)
-      case (Vertical(c1), Vertical(c2))     => Vertical(c1 ++ c2)
-      case (Horizontal(c1), d2)             => Horizontal(c1 :+ d2)
-      case (d1, Horizontal(c2))             => Horizontal(d1 +: c2)
-      case (Vertical(c1), d2)               => Vertical(c1 :+ d2)
-      case (d1, Vertical(c2))               => Vertical(d1 +: c2)
-      case (d1, d2)                         => Vertical(List(d1, d2))
+    def combine(x: Document[A], y: Document[A]): Document[A] = {
+      (x, y) match {
+        case (Empty(), d)                     => d
+        case (d, Empty())                     => d
+        case (Horizontal(c1), Horizontal(c2)) => Horizontal(c1 ++ c2)
+        case (Vertical(c1), Vertical(c2))     => Vertical(c1 ++ c2)
+        case (Vertical(c1), d2)               => Vertical(c1 :+ d2)
+        case (d1, Vertical(c2))               => Vertical(d1 +: c2)
+        case (d1, d2)                         => Vertical(List(d1, d2))
+      }
     }
   }
 
@@ -232,6 +232,16 @@ object Document {
       case "vertical"   => c.get[List[Document[A]]]("cells").map(Vertical(_))
       case "empty"      => Right(Empty())
       case t            => Left(DecodingFailure(s"Unknown type: $t", c.history))
+    }
+  }
+
+  // Extension method for pretty printing
+  extension [A](doc: Document[A]) {
+    def prettyPrint: String = doc match {
+      case Leaf(value)       => value.toString
+      case Horizontal(cells) => cells.map(_.prettyPrint).mkString(" | ")
+      case Vertical(cells)   => cells.map(_.prettyPrint).mkString("\n")
+      case Empty()           => ""
     }
   }
 }

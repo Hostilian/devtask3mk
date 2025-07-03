@@ -7,7 +7,6 @@ import java.time.{LocalDate, LocalDateTime}
 import com.example.BlaBlaBusDocumentProcessor
 import com.example.BusStop
 import com.example.Trip
-import com.example.Cli._
 
 /** Test suite for BlaBlaCar Bus API document rendering using real data models. */
 object BlaBlaBusApiSpec extends ZIOSpecDefault {
@@ -32,26 +31,22 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
           passengers = List.empty
         )
       )
-      val doc     = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date, trips)
-      val content = Cli.prettyPrint(doc)
+      val doc     = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date.nn, trips)
+      val content = doc.prettyPrint
       assertTrue(
-        content.contains("Trip ID:"),
-        content.contains("demo-trip-1"),
-        content.contains("Price:"),
-        content.contains("25.99 EUR"),
-        content.contains("Departure:"),
-        content.contains("2025-07-02T08:30:00+01:00"),
-        content.contains("Arrival:"),
-        content.contains("2025-07-02T12:45:00+01:00")
+        content.contains("Trip ID: | demo-trip-1"),
+        content.contains("Price: | 25.99 EUR"),
+        content.contains("Departure: | 2025-07-02T08:30:00+01:00"),
+        content.contains("Arrival: | 2025-07-02T12:45:00+01:00")
       )
     },
     test("searchResultsToDocument shows no routes found message when empty") {
       val originId      = 1
       val destinationId = 2
       val date          = LocalDate.parse("2025-07-02")
-      val doc           = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date, Nil)
-      val content       = Cli.prettyPrint(doc)
-      assertTrue(content.toLowerCase.contains("no routes found"))
+      val doc           = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date.nn, Nil)
+      val content       = doc.prettyPrint
+      assertTrue(content.nn.toLowerCase.nn.contains("no routes found"))
     },
     test("tripToDocument renders trip details correctly") {
       val trip = Trip(
@@ -69,16 +64,12 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         passengers = List.empty
       )
       val doc     = BlaBlaBusDocumentProcessor.tripToDocument(trip)
-      val content = Cli.prettyPrint(doc)
+      val content = doc.prettyPrint
       assertTrue(
-        content.contains("Trip ID:"),
-        content.contains("trip-xyz"),
-        content.contains("Price:"),
-        content.contains("19.99 EUR"),
-        content.contains("Departure:"),
-        content.contains("2025-07-02T09:00:00+01:00"),
-        content.contains("Arrival:"),
-        content.contains("2025-07-02T13:00:00+01:00")
+        content.contains("Trip ID: | trip-xyz"),
+        content.contains("Price: | 19.99 EUR"),
+        content.contains("Departure: | 2025-07-02T09:00:00+01:00"),
+        content.contains("Arrival: | 2025-07-02T13:00:00+01:00")
       )
     },
     test("stopToDocument renders stop details correctly") {
@@ -87,21 +78,16 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
         short_name = "Paris Bercy",
         long_name = "Paris Bercy Seine Bus Station",
         time_zone = "Europe/Paris",
-        latitude = Some(48.8352),
-        longitude = Some(2.382411),
-        destinations_ids = List()
+        latitude = Some(48.8352)
       )
       val doc     = BlaBlaBusDocumentProcessor.stopToDocument(stop)
-      val content = Cli.prettyPrint(doc)
+      val content = doc.prettyPrint
       assertTrue(
-        content.contains("Stop ID:"),
-        content.contains("42"),
-        content.contains("Name:"),
-        content.contains("Paris Bercy Seine Bus Station"),
-        content.contains("Address:"),
-        content.contains("N/A"),
-        content.contains("Timezone:"),
-        content.contains("Europe/Paris")
+        content.contains("Stop ID: | 42"),
+        content.contains("Short Name: | Paris Bercy"),
+        content.contains("Long Name: | Paris Bercy Seine Bus Station"),
+        content.contains("Time Zone: | Europe/Paris"),
+        content.contains("Latitude: | 48.8352")
       )
     }
   )
