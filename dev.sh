@@ -118,7 +118,7 @@ test() {
         sbt test
     else
         log "Running tests in Docker..."
-        docker run --rm -v "$(pwd)":/app -w /app sbtscala/scala-sbt:openjdk-21.0.2_1.9.7_3.4.3 sbt test
+        docker run --rm -v "$(pwd)":/app -w /app sbtscala/scala-sbt:1.10.0-scala3.4.3-openjdk-21 sbt test
     fi
 
     log "✓ Tests completed"
@@ -133,7 +133,7 @@ format() {
         sbt scalafmtAll
     else
         log "Running scalafmt in Docker..."
-        docker run --rm -v "$(pwd)":/app -w /app sbtscala/scala-sbt:openjdk-21.0.2_1.9.7_3.4.3 sbt scalafmtAll
+        docker run --rm -v "$(pwd)":/app -w /app sbtscala/scala-sbt:1.10.0-scala3.4.3-openjdk-21 sbt scalafmtAll
     fi
 
     log "✓ Code formatted"
@@ -177,7 +177,7 @@ ci() {
     if command -v sbt &> /dev/null; then
         sbt compile
     else
-        docker run --rm -v "$(pwd)":/app -w /app sbtscala/scala-sbt:openjdk-21.0.2_1.9.7_3.4.3 sbt compile
+        docker run --rm -v "$(pwd)":/app -w /app sbtscala/scala-sbt:1.10.0-scala3.4.3-openjdk-21 sbt compile
     fi
 
     log "Step 3: Run tests..."
