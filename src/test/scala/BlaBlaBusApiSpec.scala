@@ -46,7 +46,9 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
       val date          = LocalDate.parse("2025-07-02")
       val doc           = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date.nn, Nil)
       val content       = doc.prettyPrint
-      assertTrue(content.toLowerCase.nn.contains("no routes found"))
+      assertTrue(
+        content != null && content.toLowerCase.contains("no routes found")
+      ) || { println(s"Actual content: '$content'"); false }
     },
     test("tripToDocument renders trip details correctly") {
       val trip = Trip(
