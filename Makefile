@@ -123,3 +123,6 @@ quickstart: check-deps build docker-build up ## Quick start: build and run every
 	@echo "To run CLI: make up-cli"
 	@echo "To see logs: make logs"
 	@echo "To stop: make down"
+
+docker run --rm -v "%cd%":/app -w /app sbtscala/scala-sbt:1.11.0-scala3.4.3-openjdk-21 sbt test
+docker run --rm -v "%cd%":/app -w /app sbtscala/scala-sbt:1.11.0-scala3.4.3-openjdk-21 sbt scalafmtAll

@@ -92,7 +92,8 @@ services:
 For more details, see the [Makefile](Makefile), [Dockerfile](Dockerfile), and [docker-compose.yml](docker-compose.yml).
 
 ```dockerfile
-# ... existing Dockerfile content ...
-FROM sbtscala/scala-sbt:1.10.0-scala3.4.3-openjdk-21 AS builder
-# ... existing Dockerfile content ...
+# Builder stage for compilation
+FROM sbtscala/scala-sbt:1.11.0-scala3.4.3-openjdk-21 AS builder
+# Runtime stage for minimal final image
+FROM eclipse-temurin:21-jre-alpine AS runtime
 ```
