@@ -90,3 +90,9 @@ services:
 ---
 
 For more details, see the [Makefile](Makefile), [Dockerfile](Dockerfile), and [docker-compose.yml](docker-compose.yml).
+
+```dockerfile
+# ... existing Dockerfile content ...
+FROM sbtscala/scala-sbt:openjdk-21.0.2_1.9.7_3.4.3 AS builder
+# ... existing Dockerfile content ...
+```
