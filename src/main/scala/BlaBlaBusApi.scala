@@ -328,8 +328,12 @@ object BlaBlaBusDocumentProcessor {
 
   def searchResultsToDocument(origin: Int, destination: Int, date: LocalDate, trips: List[Trip]): Document[String] = {
     val header: Document[String] = Horizontal(List(Leaf(s"Search Results for $origin to $destination on $date")))
-    val tripsDocs                = trips.map(tripToDocument)
-    Vertical(header :: tripsDocs)
+    if (trips.isEmpty) {
+      Vertical(List(header, Leaf("No routes found")))
+    } else {
+      val tripsDocs = trips.map(tripToDocument)
+      Vertical(header :: tripsDocs)
+    }
   }
 
   def errorToDocument(error: BlaBlaBusApiError): Document[String] = {
