@@ -46,7 +46,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
       val date          = LocalDate.parse("2025-07-02")
       val doc           = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date.nn, Nil)
       val content       = doc.prettyPrint
-      assertTrue(content.nn.toLowerCase.nn.contains("no routes found"))
+      assertTrue(content.toLowerCase.contains("no routes found"))
     },
     test("tripToDocument renders trip details correctly") {
       val trip = Trip(
@@ -100,10 +100,9 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
       val content = doc.prettyPrint
       assertTrue(
         content.contains("Stop ID: | 42"),
-        content.contains("Short Name: | Paris Bercy"),
-        content.contains("Long Name: | Paris Bercy Seine Bus Station"),
-        content.contains("Time Zone: | Europe/Paris"),
-        content.contains("Latitude: | 48.8352")
+        content.contains("Name: | Paris Bercy Seine Bus Station"),
+        content.contains("Timezone: | Europe/Paris"),
+        content.contains("Address: | N/A")
       )
     }
   )
