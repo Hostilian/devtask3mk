@@ -93,7 +93,7 @@ For more details, see the [Makefile](Makefile), [Dockerfile](Dockerfile), and [d
 
 ```dockerfile
 # Builder stage for compilation
-FROM sbtscala/scala-sbt:1.11.0-openjdk-21 AS builder
+FROM sbtscala/scala-sbt:1.8.2-openjdk-21 AS builder
 # Runtime stage for minimal final image
 FROM eclipse-temurin:21-jre-alpine AS runtime
 ```

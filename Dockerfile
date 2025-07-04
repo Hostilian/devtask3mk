@@ -1,5 +1,5 @@
 # Multi-stage build for smaller final image
-FROM sbtscala/scala-sbt:1.11.0-openjdk-21 AS builder
+FROM sbtscala/scala-sbt:1.8.2-openjdk-21 AS builder
 
 WORKDIR /app
 
