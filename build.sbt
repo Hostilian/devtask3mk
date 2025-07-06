@@ -58,7 +58,10 @@ lazy val root = project
     Test / javaOptions += "-Djmh.separateClasspathJAR=true",
 
     // Test settings
-    Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"),
+    Test / testOptions ++= Seq(
+      Tests.Argument(TestFrameworks.ScalaTest, "-oF", "-u", "target/test-reports"),
+      Tests.Argument(TestFrameworks.ZIO, "-xml-report-path", "target/test-reports-zio")
+    ),
     Test / parallelExecution := false,
     mainClass in (Compile, run) := Some("com.example.Server")
   )

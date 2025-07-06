@@ -110,12 +110,8 @@ jobs:
       - name: Compile code
         run: sbt compile
 
-      - name: Run tests
-        run: sbt "test; testOnly * -- -oF"
-
-      - name: Generate test report
-        run: sbt "testOnly * -- -u target/test-reports"
-        if: always()
+      - name: Run tests and generate reports
+        run: sbt test
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
