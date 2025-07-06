@@ -8,7 +8,14 @@ lazy val root = project
   .in(file("."))
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .settings(
-    name := "document-matrix",
+    name := "devtask3mk",
+    
+    // Source directories
+    Compile / scalaSource := baseDirectory.value / "backend" / "src" / "main" / "scala",
+    Test / scalaSource := baseDirectory.value / "backend" / "src" / "test" / "scala",
+    Compile / unmanagedSourceDirectories += baseDirectory.value / "backend" / "core",
+    Compile / unmanagedSourceDirectories += baseDirectory.value / "backend" / "apps" / "transport-api",
+    Test / unmanagedSourceDirectories += baseDirectory.value / "backend" / "src" / "test" / "scala",
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % "2.1.11",
       "dev.zio" %% "zio-interop-cats" % "23.1.0.2",

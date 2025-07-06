@@ -1,3 +1,4 @@
+# Scala/SBT
 *.class
 *.log
 target/
@@ -13,5 +14,20 @@ out/
 project/metals.sbt
 project/project/
 project/target/
-node_modules
-node_modules
+
+# Frontend
+node_modules/
+.svelte-kit/
+frontend/*/node_modules/
+frontend/*/.svelte-kit/
+frontend/*/dist/
+frontend/*/build/
+
+# Infrastructure
+infrastructure/data/
+infrastructure/logs/
+
+# Legacy and temporary files
+legacy-docs/temp/
+*.tmp
+*.bak
