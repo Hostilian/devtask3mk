@@ -60,8 +60,9 @@ lazy val root = project
     // Test settings
     Test / testOptions ++= Seq(
       Tests.Argument(TestFrameworks.ScalaTest, "-oF", "-u", "target/test-reports"),
-      Tests.Argument(TestFrameworks.ZIO, "-xml-report-path", "target/test-reports-zio")
+      Tests.Argument(new TestFramework("zio.test.sbt.ZTestFramework"), "-xml-report-path", "target/test-reports-zio")
     ),
     Test / parallelExecution := false,
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
     mainClass in (Compile, run) := Some("com.example.Server")
   )
