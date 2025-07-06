@@ -59,5 +59,6 @@ lazy val root = project
 
     // Test settings
     Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"),
-    Test / parallelExecution := false
+    Test / parallelExecution := false,
+    mainClass in (Compile, run) := Some("com.example.Server")
   )
