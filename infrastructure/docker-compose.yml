@@ -1,19 +1,20 @@
 version: '3.8'
 
 services:
-  document-matrix-server:
+  backend:
     build:
-      context: .
+      context: ..
+      dockerfile: infrastructure/Dockerfile
       target: runtime
     image: ghcr.io/hostilian/devtask3mk:latest
-    container_name: document-matrix-server
+    container_name: devtask3mk-backend
     ports:
       - "8081:8081"
     environment:
       - MODE=server
       - JAVA_OPTS=-Xmx512m -Xms256m
     volumes:
-      - ./example.json:/app/example.json:ro
+      - ../example.json:/app/example.json:ro
       - ./logs:/app/logs
     restart: unless-stopped
     healthcheck:
@@ -23,19 +24,40 @@ services:
       retries: 3
       start_period: 40s
     networks:
-      - document-matrix-network
+      - devtask3mk-network
 
-  document-matrix-cli:
+  frontend:
     build:
-      context: .
+      context: ../frontend/snake-game
+      dockerfile: Dockerfile
+    image: devtask3mk-frontend:latest
+    container_name: devtask3mk-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - devtask3mk-network
+
+  cli:
+    build:
+      context: ..
+      dockerfile: infrastructure/Dockerfile
       target: runtime
     image: ghcr.io/hostilian/devtask3mk:latest
-    container_name: document-matrix-cli
+    container_name: devtask3mk-cli
     environment:
       - MODE=cli
       - JAVA_OPTS=-Xmx256m -Xms128m
     volumes:
-      - ./example.json:/app/example.json:ro
+      - ../example.json:/app/example.json:ro
       - ./logs:/app/logs
       - ./output:/app/output
     stdin_open: true
@@ -43,7 +65,7 @@ services:
     profiles:
       - cli
     networks:
-      - document-matrix-network
+      - devtask3mk-network
 
   # Development services
   sbt-dev:
@@ -92,7 +114,7 @@ services:
       - document-matrix-network
 
 networks:
-  document-matrix-network:
+  devtask3mk-network:
     driver: bridge
 
 volumes:

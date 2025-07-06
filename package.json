@@ -1,23 +1,42 @@
 {
-  "name": "snake-game-svelte",
-  "version": "0.0.1",
+  "name": "devtask3mk",
+  "version": "1.0.0",
+  "description": "Multi-stack development platform with Scala backend and modern web frontend",
   "private": true,
+  "workspaces": [
+    "frontend/*"
+  ],
   "scripts": {
-    "dev": "vite dev",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+    "dev": "npm run dev --workspace=frontend/snake-game",
+    "build": "npm run build --workspace=frontend/snake-game",
+    "preview": "npm run preview --workspace=frontend/snake-game",
+    "check": "npm run check --workspace=frontend/snake-game",
+    "check:watch": "npm run check:watch --workspace=frontend/snake-game",
+    "backend:dev": "sbt \"runMain com.example.Server\"",
+    "backend:cli": "sbt \"runMain com.example.Cli\"",
+    "backend:test": "sbt test",
+    "backend:compile": "sbt compile",
+    "docker:up": "docker-compose -f infrastructure/docker-compose.yml up -d",
+    "docker:down": "docker-compose -f infrastructure/docker-compose.yml down",
+    "docker:logs": "docker-compose -f infrastructure/docker-compose.yml logs -f",
+    "start": "npm run docker:up",
+    "stop": "npm run docker:down"
   },
-  "devDependencies": {
-    "@sveltejs/adapter-auto": "^3.0.0",
-    "@sveltejs/kit": "^2.0.0",
-    "@sveltejs/vite-plugin-svelte": "^3.0.0",
-    "svelte": "^5.0.0-next.1",
-    "svelte-check": "^3.6.0",
-    "tslib": "^2.4.1",
-    "typescript": "^5.0.0",
-    "vite": "^5.0.11"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hostilian/devtask3mk.git"
   },
+  "keywords": [
+    "scala",
+    "functional-programming",
+    "svelte",
+    "typescript",
+    "docker",
+    "full-stack",
+    "transport-api",
+    "game-development"
+  ],
+  "author": "DevTask3MK Team",
+  "license": "MIT",
   "type": "module"
 }
