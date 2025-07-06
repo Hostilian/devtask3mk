@@ -5,6 +5,7 @@ import zio.test._
 import zio.test.Assertion._
 import java.time.{LocalDate, LocalDateTime}
 import com.example.BlaBlaBusDocumentProcessor
+import scala.language.unsafeNulls
 import com.example.BusStop
 import com.example.Trip
 import com.example.Cli._
@@ -32,7 +33,7 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
           passengers = List.empty
         )
       )
-      val doc     = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date, trips)
+      val doc     = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date.nn, trips)
       val content = Cli.prettyPrint(doc)
       assertTrue(
         content.contains("Trip ID:"),
@@ -49,9 +50,9 @@ object BlaBlaBusApiSpec extends ZIOSpecDefault {
       val originId      = 1
       val destinationId = 2
       val date          = LocalDate.parse("2025-07-02")
-      val doc           = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date, Nil)
+      val doc           = BlaBlaBusDocumentProcessor.searchResultsToDocument(originId, destinationId, date.nn, Nil)
       val content       = Cli.prettyPrint(doc)
-      assertTrue(content.toLowerCase.contains("no routes found"))
+      assertTrue(content.nn.toLowerCase.contains("no routes found"))
     },
     test("tripToDocument renders trip details correctly") {
       val trip = Trip(
