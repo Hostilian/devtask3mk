@@ -105,7 +105,7 @@
         <div class="game-over">
             <h2>Game Over!</h2>
             <p>Score: {score}</p>
-            <button on:click={startGame}>Play Again</button>
+            <button onclick={startGame}>Play Again</button>
         </div>
     {:else}
         <div class="game-board" style="width: {GRID_SIZE * TILE_SIZE}px; height: {GRID_SIZE * TILE_SIZE}px;">
