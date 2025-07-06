@@ -14,14 +14,14 @@ class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks wit
   def genDocument[A: Arbitrary]: Gen[Document[A]] = {
     val genLeaf = Arbitrary.arbitrary[A].map(Leaf(_))
     val genEmpty = Gen.const(Empty[A]())
-    
+
     def genSized(depth: Int): Gen[Document[A]] = {
       if (depth <= 0) {
         Gen.oneOf(genLeaf, genEmpty)
       } else {
         val genHorizontal = Gen.listOfN(Gen.chooseNum(0, 3).sample.getOrElse(1), genSized(depth - 1)).map(Horizontal(_))
         val genVertical = Gen.listOfN(Gen.chooseNum(0, 3).sample.getOrElse(1), genSized(depth - 1)).map(Vertical(_))
-        
+
         Gen.oneOf(
           genLeaf,
           genEmpty,
