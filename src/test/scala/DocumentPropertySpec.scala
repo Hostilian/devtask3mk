@@ -51,21 +51,21 @@ class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks wit
   }
 
   property("traverse identity") {
-    forAll { (doc: Document[Int]) =>
+    forAll(minSuccessful(10)) { (doc: Document[Int]) =>
       import cats.instances.option.*
       Document.traverse(doc)(Option(_)) shouldBe Some(doc)
     }
   }
 
   property("semigroup associativity") {
-    forAll { (d1: Document[Int], d2: Document[Int], d3: Document[Int]) =>
+    forAll(minSuccessful(10)) { (d1: Document[Int], d2: Document[Int], d3: Document[Int]) =>
       import cats.syntax.semigroup.*
       (d1 |+| d2) |+| d3 shouldBe d1 |+| (d2 |+| d3)
     }
   }
 
   property("monoid identity") {
-    forAll { (doc: Document[Int]) =>
+    forAll(minSuccessful(10)) { (doc: Document[Int]) =>
       import cats.syntax.monoid.*
       import cats.Monoid
       doc |+| Monoid[Document[Int]].empty shouldBe doc
@@ -74,7 +74,7 @@ class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks wit
   }
 
   property("decoder(encoder(x)) == x") {
-    forAll { (doc: Document[Int]) =>
+    forAll(minSuccessful(10)) { (doc: Document[Int]) =>
       import io.circe.syntax.*
       import io.circe.parser.decode
       decode[Document[Int]](doc.asJson.noSpaces) shouldBe Right(doc)
@@ -90,28 +90,28 @@ class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks wit
   }
 
   property("leaf prism roundtrip") {
-    forAll { (value: String) =>
+    forAll(minSuccessful(10)) { (value: String) =>
       DocumentOptics.leafPrism.reverseGet(value) shouldBe Leaf(value)
       DocumentOptics.leafPrism.getOption(Leaf(value)) shouldBe Some(value)
     }
   }
 
   property("horizontal prism roundtrip") {
-    forAll { (list: List[Document[String]]) =>
+    forAll(minSuccessful(10)) { (list: List[Document[String]]) =>
       DocumentOptics.horizontalPrism.reverseGet(list) shouldBe Horizontal(list)
       DocumentOptics.horizontalPrism.getOption(Horizontal(list)) shouldBe Some(list)
     }
   }
 
   property("vertical prism roundtrip") {
-    forAll { (list: List[Document[String]]) =>
+    forAll(minSuccessful(10)) { (list: List[Document[String]]) =>
       DocumentOptics.verticalPrism.reverseGet(list) shouldBe Vertical(list)
       DocumentOptics.verticalPrism.getOption(Vertical(list)) shouldBe Some(list)
     }
   }
 
   property("generated documents are valid") {
-    forAll { (doc: Document[Int]) =>
+    forAll(minSuccessful(10)) { (doc: Document[Int]) =>
       doc shouldBe a[Document[?]]
     }
   }
