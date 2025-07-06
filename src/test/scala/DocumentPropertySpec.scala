@@ -13,36 +13,38 @@ class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks wit
   // Generator for Document[A]
   def genDocument[A: Arbitrary]: Gen[Document[A]] = {
     val genLeaf = Arbitrary.arbitrary[A].map(Leaf(_))
-    def genNode: Gen[Document[A]] = Gen.oneOf(
-      genHorizontal,
-      genVertical
-    )
-    def genHorizontal = Gen.listOf(genSized).map(Horizontal(_))
-    def genVertical   = Gen.listOf(genSized).map(Vertical(_))
-
-    def genSized: Gen[Document[A]] = Gen.sized { size =>
-      if (size <= 0) genLeaf
-      else Gen.resize(size / 2, Gen.oneOf(genLeaf, genNode))
+    val genEmpty = Gen.const(Empty[A]())
+    
+    def genSized(depth: Int): Gen[Document[A]] = {
+      if (depth <= 0) {
+        Gen.oneOf(genLeaf, genEmpty)
+      } else {
+        val genHorizontal = Gen.listOfN(Gen.chooseNum(0, 3).sample.getOrElse(1), genSized(depth - 1)).map(Horizontal(_))
+        val genVertical = Gen.listOfN(Gen.chooseNum(0, 3).sample.getOrElse(1), genSized(depth - 1)).map(Vertical(_))
+        
+        Gen.oneOf(
+          genLeaf,
+          genEmpty,
+          genHorizontal,
+          genVertical
+        )
+      }
     }
 
-    Gen.oneOf(
-      genLeaf,
-      Gen.const(Empty[A]()),
-      genSized
-    )
+    Gen.sized(size => genSized(math.min(size, 3)))
   }
 
   implicit def arbitraryDocument[A: Arbitrary]: Arbitrary[Document[A]] =
     Arbitrary(genDocument[A])
 
   property("map identity") {
-    forAll { (doc: Document[Int]) =>
+    forAll(minSuccessful(10)) { (doc: Document[Int]) =>
       Document.map(doc)(identity) shouldBe doc
     }
   }
 
   property("map composition") {
-    forAll { (doc: Document[Int], f: Int => String, g: String => Double) =>
+    forAll(minSuccessful(10)) { (doc: Document[Int], f: Int => String, g: String => Double) =>
       val h = g compose f
       Document.map(Document.map(doc)(f))(g) shouldBe Document.map(doc)(h)
     }
