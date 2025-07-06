@@ -12,7 +12,7 @@ class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks wit
 
   // Generator for Document[A]
   def genDocument[A: Arbitrary]: Gen[Document[A]] = {
-    val genLeaf = Arbitrary.arbitrary[A].map(Leaf(_))
+    val genLeaf  = Arbitrary.arbitrary[A].map(Leaf(_))
     val genEmpty = Gen.const(Empty[A]())
 
     def genSized(depth: Int): Gen[Document[A]] = {
@@ -20,7 +20,7 @@ class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks wit
         Gen.oneOf(genLeaf, genEmpty)
       } else {
         val genHorizontal = Gen.listOfN(Gen.chooseNum(0, 3).sample.getOrElse(1), genSized(depth - 1)).map(Horizontal(_))
-        val genVertical = Gen.listOfN(Gen.chooseNum(0, 3).sample.getOrElse(1), genSized(depth - 1)).map(Vertical(_))
+        val genVertical   = Gen.listOfN(Gen.chooseNum(0, 3).sample.getOrElse(1), genSized(depth - 1)).map(Vertical(_))
 
         Gen.oneOf(
           genLeaf,
