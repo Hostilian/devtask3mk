@@ -1,8 +1,8 @@
 package com.example
 
 import zio._
-import zio.http._
-import zio.json._
+import zio.http.*
+import zio.json.*
 import zio.json.ast.Json
 import java.time.{LocalDateTime, LocalDate}
 import java.time.format.DateTimeFormatter
