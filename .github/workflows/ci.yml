@@ -118,7 +118,9 @@ jobs:
         if: always()
         with:
           name: test-results-java-${{ matrix.java-version }}
-          path: target/test-reports/
+          path: |
+            target/test-reports/
+            target/test-reports-zio/
 
       - name: Package application
         run: sbt package
