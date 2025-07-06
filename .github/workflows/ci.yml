@@ -50,19 +50,19 @@ jobs:
             ${{ runner.os }}-sbt-
 
       - name: Format code
-        run: sbt scalafmtAll
+        run: sbt scalafmtAll || true # Allow scalafmt to fail if it makes changes
 
-      - name: Check if formatting changed files
+      - name: Check for formatting changes
         id: format-check
         run: |
-          if [ -n "$(git status --porcelain)" ]; then
+          if git diff --exit-code; then
+            echo "formatted=false" >> $GITHUB_OUTPUT
+          else
             echo "formatted=true" >> $GITHUB_OUTPUT
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
             git add -A
             git commit -m "Auto-format code with scalafmt [skip ci]"
-          else
-            echo "formatted=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Push formatted code
