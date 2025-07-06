@@ -13,3 +13,5 @@ out/
 project/metals.sbt
 project/project/
 project/target/
+node_modules
+node_modules
