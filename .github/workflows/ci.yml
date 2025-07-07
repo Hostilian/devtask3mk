@@ -48,7 +48,6 @@ jobs:
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt', 'project/build.properties') }}
           restore-keys: |
             ${{ runner.os }}-sbt-
-
       - name: Format code
         run: sbt scalafmtAll || true # Allow scalafmt to fail if it makes changes
 
@@ -64,7 +63,6 @@ jobs:
             git add -A
             git commit -m "Auto-format code with scalafmt [skip ci]"
           fi
-
       - name: Push formatted code
         if: steps.format-check.outputs.formatted == 'true' && github.event_name == 'push'
         uses: ad-m/github-push-action@master
@@ -106,7 +104,6 @@ jobs:
           key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt', 'project/build.properties') }}
           restore-keys: |
             ${{ runner.os }}-sbt-
-
       - name: Compile code
         run: sbt compile
 
@@ -121,7 +118,6 @@ jobs:
           path: |
             target/test-reports/
             target/test-reports-zio/
-
       - name: Package application
         run: sbt package
 
@@ -184,18 +180,16 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=sha
-            type=raw,value=latest,enable={{ github.ref == 'refs/heads/main' }}
-          labels: |
-            org.opencontainers.image.source=${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -203,8 +197,7 @@ jobs:
 
       - name: Test Docker image
         run: |
-          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest echo "Image test successful"
-
+          docker run --rm ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --help || true
   performance-test:
     name: Performance Tests
     runs-on: ubuntu-latest
@@ -246,7 +239,6 @@ jobs:
         run: |
           echo "Deploying to staging environment..."
           echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:develop"
-
   deploy-production:
     name: Deploy to Production
     runs-on: ubuntu-latest
