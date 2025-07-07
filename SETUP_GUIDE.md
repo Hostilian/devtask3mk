@@ -130,7 +130,7 @@ If you're using VS Code, these are available in the Command Palette (Ctrl+Shift+
 
 ## Docker Setup 🐳
 
-Want to run it in Docker? Here's how:
+Want to run it in Docker? here's how:
 
 ### Build Image
 ```bash
