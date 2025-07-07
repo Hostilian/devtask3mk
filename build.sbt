@@ -8,7 +8,14 @@ lazy val root = project
   .in(file("."))
   .enablePlugins(JavaAppPackaging, DockerPlugin)
   .settings(
-    name := "document-matrix",
+    name := "devtask3mk",
+    
+    // Source directories
+    Compile / scalaSource := baseDirectory.value / "backend" / "src" / "main" / "scala",
+    Test / scalaSource := baseDirectory.value / "backend" / "src" / "test" / "scala",
+    Compile / unmanagedSourceDirectories += baseDirectory.value / "backend" / "core",
+    Compile / unmanagedSourceDirectories += baseDirectory.value / "backend" / "apps" / "transport-api",
+    Test / unmanagedSourceDirectories += baseDirectory.value / "backend" / "src" / "test" / "scala",
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio" % "2.1.11",
       "dev.zio" %% "zio-interop-cats" % "23.1.0.2",
@@ -58,6 +65,11 @@ lazy val root = project
     Test / javaOptions += "-Djmh.separateClasspathJAR=true",
 
     // Test settings
-    Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-u", "target/test-reports"),
-    Test / parallelExecution := false
+    Test / testOptions ++= Seq(
+      Tests.Argument(TestFrameworks.ScalaTest, "-oF", "-u", "target/test-reports"),
+      Tests.Argument(new TestFramework("zio.test.sbt.ZTestFramework"), "-xml-report-path", "target/test-reports-zio")
+    ),
+    Test / parallelExecution := false,
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+    mainClass in (Compile, run) := Some("com.example.Server")
   )

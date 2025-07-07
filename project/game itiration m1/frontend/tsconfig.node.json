@@ -1,0 +1,9 @@
+{
+  "extends": "@tsconfig/node20",
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "types": ["node"]
+  },
+  "include": ["vite.config.js"]
+}

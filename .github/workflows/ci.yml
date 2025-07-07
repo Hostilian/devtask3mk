@@ -50,19 +50,19 @@ jobs:
             ${{ runner.os }}-sbt-
 
       - name: Format code
-        run: sbt scalafmtAll
+        run: sbt scalafmtAll || true # Allow scalafmt to fail if it makes changes
 
-      - name: Check if formatting changed files
+      - name: Check for formatting changes
         id: format-check
         run: |
-          if [ -n "$(git status --porcelain)" ]; then
+          if git diff --exit-code; then
+            echo "formatted=false" >> $GITHUB_OUTPUT
+          else
             echo "formatted=true" >> $GITHUB_OUTPUT
             git config --local user.email "action@github.com"
             git config --local user.name "GitHub Action"
             git add -A
             git commit -m "Auto-format code with scalafmt [skip ci]"
-          else
-            echo "formatted=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Push formatted code
@@ -110,19 +110,17 @@ jobs:
       - name: Compile code
         run: sbt compile
 
-      - name: Run tests
-        run: sbt "test; testOnly * -- -oF"
-
-      - name: Generate test report
-        run: sbt "testOnly * -- -u target/test-reports"
-        if: always()
+      - name: Run tests and generate reports
+        run: sbt test
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results-java-${{ matrix.java-version }}
-          path: target/test-reports/
+          path: |
+            target/test-reports/
+            target/test-reports-zio/
 
       - name: Package application
         run: sbt package
