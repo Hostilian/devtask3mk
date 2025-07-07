@@ -1,72 +1,47 @@
-# Root Dockerfile - delegates to infrastructure/Dockerfile
-# This provides compatibility for CI systems expecting a root-level Dockerfile
+# Multi-stage Dockerfile for Svelte Snake Game
 
-# Multi-stage build for smaller final image
-FROM eclipse-temurin:21-jdk AS builder
-
-WORKDIR /app
-
-# Install sbt
-RUN apt-get update && \
-    apt-get install -y curl gpg && \
-    echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | tee /etc/apt/sources.list.d/sbt.list && \
-    echo "deb https://repo.scala-sbt.org/scalasbt/debian /" | tee /etc/apt/sources.list.d/sbt_old.list && \
-    curl -sL "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x2EE0EA64E40A89B84B2DF73499E82A75642AC823" | gpg --no-default-keyring --keyring gnupg-ring:/etc/apt/trusted.gpg.d/scalasbt-release.gpg --import && \
-    chmod 644 /etc/apt/trusted.gpg.d/scalasbt-release.gpg && \
-    apt-get update && \
-    apt-get install -y sbt && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy build files first for better caching
-COPY build.sbt .
-COPY project/ project/
-
-# Download dependencies (cached if build.sbt hasn't changed)
-RUN sbt update
-
-# Copy source and build
-COPY src/ src/
-RUN sbt clean compile package
-
-# Runtime stage
-FROM eclipse-temurin:21-jre-alpine AS runtime
-
-# Install curl for health checks
-RUN apk add --no-cache curl
+# Build stage
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S appgroup && \
-    adduser -u 1001 -S appuser -G appgroup
+# Copy package files
+COPY package*.json ./
+# Install ALL dependencies (including devDependencies) for build
+RUN npm ci
 
-# Create directories with proper permissions
-RUN mkdir -p /app/logs /app/output && \
-    chown -R appuser:appgroup /app
+# Copy source code
+COPY . .
 
-# Copy only the JAR file we need
-COPY --from=builder /app/target/scala-3.4.3/devtask3mk_3-1.0.0.jar app.jar
+# Build the application
+RUN npm run build
 
-# Entrypoint script for mode selection
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh && chown appuser:appgroup /entrypoint.sh
+# Production stage
+FROM node:18-alpine AS runtime
 
-# Switch to non-root user
-USER appuser
+WORKDIR /app
 
-# Expose both ports for CLI and server
-EXPOSE 8080 8081
+# Copy built application
+COPY --from=builder /app/build ./build
+COPY --from=builder /app/package*.json ./
+
+# Install only production dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S svelte -u 1001
+
+# Set ownership
+RUN chown -R svelte:nodejs /app
+USER svelte
+
+# Expose port
+EXPOSE 3000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD curl -f http://localhost:8081/health || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3000/ || exit 1
 
-ENTRYPOINT ["/entrypoint.sh"]
-
-# Add some metadata
-LABEL description="Document Matrix - Functional Programming Showcase"
-LABEL version="1.0.0"
-LABEL maintainer="hostilian"
-LABEL org.opencontainers.image.source="https://github.com/hostilian/devtask3mk"
-LABEL org.opencontainers.image.description="Document Matrix application with CLI and Server modes"
-LABEL org.opencontainers.image.licenses="MIT"
+# Start the application
+CMD ["npm", "run", "preview", "--", "--host", "0.0.0.0", "--port", "3000"]
