@@ -20,8 +20,15 @@ class DocumentPropertySpec extends AnyPropSpec with ScalaCheckPropertyChecks wit
       if (depth <= 0) {
         Gen.oneOf(genLeaf, genEmpty)
       } else {
-        val genHorizontal = Gen.listOfN(Gen.chooseNum(0, 3).sample.getOrElse(1), genSized(depth - 1)).map(Horizontal(_))
-        val genVertical = Gen.listOfN(Gen.chooseNum(0, 3).sample.getOrElse(1), genSized(depth - 1)).map(Vertical(_))
+        val genHorizontal = for {
+          size <- Gen.chooseNum(1, 3)
+          cells <- Gen.listOfN(size, genSized(depth - 1))
+        } yield Horizontal(cells)
+        
+        val genVertical = for {
+          size <- Gen.chooseNum(1, 3)
+          cells <- Gen.listOfN(size, genSized(depth - 1))
+        } yield Vertical(cells)
 
         Gen.oneOf(
           genLeaf,
