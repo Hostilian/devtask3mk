@@ -2,6 +2,7 @@ package com.example
 
 import com.example.Document
 import com.example.Document.*
+import com.example.DocumentOptics
 import org.scalacheck.Arbitrary
 import org.scalacheck.Gen
 import org.scalatest.matchers.should.Matchers
