@@ -109,10 +109,6 @@ object Document {
     def combine(x: Document[A], y: Document[A]): Document[A] = (x, y) match {
       case (Empty(), d)                       => d
       case (d, Empty())                       => d
-      case (Horizontal(Nil), d)               => d
-      case (d, Horizontal(Nil))               => d
-      case (Vertical(Nil), d)                 => d
-      case (d, Vertical(Nil))                 => d
       case (Horizontal(c1), Horizontal(c2))   => Horizontal(c1 ++ c2)
       case (Vertical(c1), Vertical(c2))       => Vertical(c1 ++ c2)
       case (Vertical(c1), d2)                 => Vertical(c1 :+ d2)

@@ -42,7 +42,7 @@ RUN mkdir -p /app/logs /app/output && \
     chown -R appuser:appgroup /app
 
 # Copy only the JAR file we need
-COPY --from=builder /app/target/scala-3.4.3/document-matrix_3-1.0.0.jar app.jar
+COPY --from=builder /app/target/scala-3.4.3/devtask3mk_3-1.0.0.jar app.jar
 
 # Entrypoint script for mode selection
 COPY entrypoint.sh /entrypoint.sh
