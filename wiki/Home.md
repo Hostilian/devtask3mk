@@ -64,7 +64,7 @@ devtask3mk/
 └── project/                        # SBT configuration
 ```
 
-## 🎯 Key Features
+## 🎯 Key features
 
 - **Algebraic Data Types** - Sealed trait hierarchies with case classes
 - **Type Class Instances** - Functor, Applicative, Monad, Traverse implementations
