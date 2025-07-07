@@ -14,6 +14,7 @@ out/
 project/metals.sbt
 project/project/
 project/target/
+sbt/
 
 # Frontend
 node_modules/
