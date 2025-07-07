@@ -21,8 +21,9 @@ COPY project/ project/
 # Download dependencies (cached if build.sbt hasn't changed)
 RUN sbt update
 
-# Copy source and build
-COPY src/ src/
+# Copy source and build - Updated paths for actual project structure
+COPY backend/ backend/
+COPY core/ core/
 RUN sbt clean compile package
 
 # Runtime stage
@@ -41,8 +42,8 @@ RUN addgroup -g 1001 -S appgroup && \
 RUN mkdir -p /app/logs /app/output && \
     chown -R appuser:appgroup /app
 
-# Copy only the JAR file we need
-COPY --from=builder /app/target/scala-3.4.3/document-matrix_3-1.0.0.jar app.jar
+# Copy only the JAR file we need - Updated to match actual project name
+COPY --from=builder /app/target/scala-3.4.3/devtask3mk_3-1.0.0.jar app.jar
 
 # Entrypoint script for mode selection
 COPY entrypoint.sh /entrypoint.sh

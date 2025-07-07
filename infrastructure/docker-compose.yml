@@ -4,7 +4,7 @@ services:
   backend:
     build:
       context: ..
-      dockerfile: infrastructure/Dockerfile
+      dockerfile: Dockerfile
       target: runtime
     image: ghcr.io/hostilian/devtask3mk:latest
     container_name: devtask3mk-backend
@@ -49,7 +49,7 @@ services:
   cli:
     build:
       context: ..
-      dockerfile: infrastructure/Dockerfile
+      dockerfile: Dockerfile
       target: runtime
     image: ghcr.io/hostilian/devtask3mk:latest
     container_name: devtask3mk-cli
